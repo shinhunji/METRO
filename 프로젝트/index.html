@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="그래프 알고리즘으로 전국 지하철 최적 경로를 찾는 서비스" />
+  <title>Metro Link | 전국 지하철 길찾기</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Gowun+Dodum&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="loading-screen" class="loading-screen" aria-live="polite">
+    <div class="metro-loader"><i class="fa-solid fa-train-subway"></i></div>
+    <p>전국 노선도를 연결하고 있어요</p>
+  </div>
+
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Metro Link 홈"><span class="brand-mark"><i class="fa-solid fa-train-subway"></i></span><span>METRO <b>LINK</b></span></a>
+    <div class="header-status"><span class="pulse"></span><span id="live-time">--:--:--</span><span class="desktop-only">KST</span></div>
+    <button id="theme-toggle" class="icon-button" type="button" aria-label="다크 모드 전환"><i class="fa-solid fa-moon"></i></button>
+  </header>
+
+  <main id="top" class="app-shell">
+    <section class="content-panel">
+      <section class="hero-card glass-card">
+        <div class="hero-intro"><p class="eyebrow">NATIONWIDE ROUTE FINDER</p><h1>어디로 <em>이동</em>하시나요?</h1><p>그래프 알고리즘으로 가장 알맞은 경로를 계산합니다.</p></div>
+        <form id="route-form" class="route-form" autocomplete="off">
+          <div class="region-field"><label for="region-select"><i class="fa-solid fa-map"></i> 이용 지역</label><select id="region-select" aria-label="이용 지역"><option>실제 역 목록을 불러오는 중...</option></select><p>지역을 한 번 선택하면 출발·도착역 모두 같은 지역에서만 검색됩니다.</p></div>
+          <div class="station-field origin"><label for="origin-input"><i class="fa-solid fa-circle-dot"></i> 출발역</label><div class="input-wrap"><input id="origin-input" data-role="origin" placeholder="출발역을 입력하거나 목록에서 선택" aria-label="출발역" /><button class="clear-input" type="button" data-clear="origin" aria-label="출발역 지우기"><i class="fa-solid fa-xmark"></i></button></div><div id="origin-suggestions" class="suggestions"></div><div id="origin-selector" class="station-selector selector-popover" aria-label="출발역 노선과 역 선택"></div></div>
+          <button id="swap-button" class="swap-button" type="button" aria-label="출발역과 도착역 바꾸기"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>
+          <div class="station-field destination"><label for="destination-input"><i class="fa-solid fa-location-dot"></i> 도착역</label><div class="input-wrap"><input id="destination-input" data-role="destination" placeholder="도착역을 입력하거나 목록에서 선택" aria-label="도착역" /><button class="clear-input" type="button" data-clear="destination" aria-label="도착역 지우기"><i class="fa-solid fa-xmark"></i></button></div><div id="destination-suggestions" class="suggestions"></div><div id="destination-selector" class="station-selector selector-popover" aria-label="도착역 노선과 역 선택"></div></div>
+          <button class="search-button" type="submit"><i class="fa-solid fa-magnifying-glass"></i><span>길찾기</span></button>
+        </form>
+        <div class="quick-row"><span>빠른 선택</span><div id="recent-searches" class="chip-list"></div><button id="favorites-button" class="text-button" type="button"><i class="fa-regular fa-star"></i> 즐겨찾기</button></div>
+      </section>
+
+      <section class="route-options glass-card" aria-label="경로 기준 선택">
+        <div><p class="eyebrow">ROUTE PREFERENCE</p><h2>추천 경로</h2></div>
+        <div class="segmented-control">
+          <label><input type="radio" name="preference" value="time" checked /><span><i class="fa-regular fa-clock"></i> 최단시간</span></label>
+          <label><input type="radio" name="preference" value="transfer" /><span><i class="fa-solid fa-right-left"></i> 최소환승</span></label>
+          <label><input type="radio" name="preference" value="distance" /><span><i class="fa-solid fa-route"></i> 최단거리</span></label>
+        </div>
+      </section>
+
+      <section id="empty-state" class="empty-state glass-card"><div class="empty-map"><i class="fa-solid fa-map-location-dot"></i><span class="map-dot dot-a"></span><span class="map-dot dot-b"></span><span class="map-line"></span></div><h2>최적의 지하철 경로를 찾아보세요</h2><p>출발역과 도착역을 선택하면 실시간 운행 정보를 바탕으로 안내합니다.</p></section>
+
+      <section id="result-section" class="result-section hidden" aria-live="polite">
+        <div class="result-top glass-card"><div><p class="eyebrow">OPTIMAL ROUTE</p><h2 id="result-title">경로 안내</h2></div><div class="result-actions"><button id="refresh-details" class="refresh-button" type="button"><i class="fa-solid fa-rotate-right"></i><span>정보 새로고침</span></button><button id="favorite-route" class="favorite-button" type="button"><i class="fa-regular fa-star"></i><span>즐겨찾기</span></button></div></div>
+        <div id="metric-grid" class="metric-grid"></div>
+        <article class="route-card glass-card"><div class="route-card-head"><div><p class="eyebrow">YOUR JOURNEY</p><h2>최단 경로</h2></div><span id="route-badge" class="route-badge">계산 완료</span></div><div id="route-timeline" class="route-timeline"></div></article>
+        <section id="station-details" class="station-details"></section>
+        <section class="info-grid">
+          <article class="detail-card glass-card"><div class="detail-title"><span class="detail-icon bus"><i class="fa-solid fa-bus-simple"></i></span><div><p class="eyebrow">BUS CONNECTION</p><h3>출발역 버스 연계</h3></div></div><div id="origin-buses" class="api-content loading-content">경로를 검색하면 출구별 버스노선을 불러옵니다.</div></article>
+          <article class="detail-card glass-card"><div class="detail-title"><span class="detail-icon bus"><i class="fa-solid fa-bus-simple"></i></span><div><p class="eyebrow">BUS CONNECTION</p><h3>도착역 버스 연계</h3></div></div><div id="destination-buses" class="api-content loading-content">경로를 검색하면 출구별 버스노선을 불러옵니다.</div></article>
+        </section>
+        <section class="facilities-card glass-card"><div class="facilities-head"><div><p class="eyebrow">AROUND THE STATION</p><h2>주변시설</h2></div><div class="station-tabs"><button class="station-tab active" data-facility-station="origin" type="button">출발역</button><button class="station-tab" data-facility-station="destination" type="button">도착역</button></div></div><div id="facility-filters" class="facility-filters"></div><div id="facilities-content" class="facilities-content loading-content">경로를 검색하면 주변시설 정보를 불러옵니다.</div></section>
+      </section>
+    </section>
+  </main>
+
+  <section class="concept-section"><div class="concept-inner"><div class="concept-intro"><p class="eyebrow">DISCRETE MATHEMATICS IN ACTION</p><h2>사용된 이산수학 개념</h2><p>일상의 이동 문제를 논리와 구조로 풀었습니다.</p></div><div class="concept-grid"><article><span>01</span><i class="fa-solid fa-share-nodes"></i><h3>그래프 Graph</h3><p>역을 정점, 이동 구간을 가중치 간선으로 만든 뒤 Dijkstra 알고리즘으로 최적 경로를 탐색합니다.</p></article><article><span>02</span><i class="fa-solid fa-function"></i><h3>함수 Function</h3><p>이동·환승 시간, 요금, 도착 예정 시각을 순수 함수로 조합해 계산합니다.</p></article><article><span>03</span><i class="fa-solid fa-sitemap"></i><h3>트리 Tree</h3><p>대한민국 → 지역 → 노선 → 역의 계층 객체를 재귀적으로 화면에 표현합니다.</p></article><article><span>04</span><i class="fa-solid fa-circle-check"></i><h3>부울대수 Boolean</h3><p>입력 유효성, API 성공 여부, 운행 상태와 시설 필터를 true/false 논리로 제어합니다.</p></article></div></div>
+  </section>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
