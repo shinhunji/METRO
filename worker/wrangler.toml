@@ -1,0 +1,8 @@
+name = "metro-tago-proxy"
+main = "src/index.js"
+compatibility_date = "2026-07-29"
+
+# Add the production GitHub Pages URL here before deploying.
+# Example: ALLOWED_ORIGIN = "https://shinhunji.github.io"
+[vars]
+ALLOWED_ORIGIN = "https://shinhunji.github.io"

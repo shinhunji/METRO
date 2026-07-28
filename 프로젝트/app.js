@@ -1,9 +1,7 @@
 "use strict";
 
-// 국토교통부(TAGO) 지하철정보 OpenAPI 인증키입니다.
-const SERVICE_KEY = "155e8b803b8707aa4b018864f3afb776cf4fe87e7119b01f4d74b7adfef8a59a";
-// TAGO guide endpoint: the service path is SubwayInfo (not SubwayInfoService).
-const API_BASE = "https://apis.data.go.kr/1613000/SubwayInfo";
+// The Cloudflare Worker holds the TAGO key as a secret and proxies requests.
+const API_BASE = window.METRO_API_BASE;
 const LINE_COLORS = {
   "수도권": { "1호선":"#0052A4", "2호선":"#00A84D", "3호선":"#EF7C1C", "4호선":"#00A5DE", "5호선":"#996CAC", "6호선":"#CD7C2F", "7호선":"#747F00", "8호선":"#E6186C", "9호선":"#BDB092", "GTX-A":"#9A6292", "경강":"#003DA5", "경의중앙":"#77C4A3", "경춘":"#0C8E72", "공항":"#0090D2", "김포골드라인":"#A17800", "서해선":"#8FC31F", "수인분당":"#F5A200", "신림선":"#6789CA", "신분당":"#D4003B", "에버라인":"#6FB245", "우이신설":"#B7C452", "의정부":"#FDA600", "인천1호선":"#6496D8", "인천2호선":"#ED8B00", "자기부상":"#FFCD12" },
   "부산": { "1호선":"#F06A00", "2호선":"#81BF48", "3호선":"#BB8C00", "4호선":"#217DCB", "동해":"#0054A6", "부산김해경전철":"#8652A1" },
@@ -134,9 +132,13 @@ const calculateFares = stops => ({ adult: calculateFare(stops, 1400, 100), youth
 const formatTime = date => date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
 
 async function fetchTago(endpoint, params = {}) {
-  const query = new URLSearchParams({ serviceKey: SERVICE_KEY, _type: "json", numOfRows: "50", pageNo: "1", ...params });
+  if (!API_BASE || API_BASE.includes("YOUR-WORKER-NAME")) {
+    console.warn("METRO_API_BASE is not configured.");
+    return null;
+  }
+  const query = new URLSearchParams({ endpoint, _type: "json", numOfRows: "50", pageNo: "1", ...params });
   try {
-    const response = await fetch(`${API_BASE}/${endpoint}?${query}`);
+    const response = await fetch(`${API_BASE}?${query}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
     const body = data.response?.body;
