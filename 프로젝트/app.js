@@ -5,7 +5,6 @@ const API_BASE = "/api/tago";
 const CATALOG_FILE = "station_catalog.json";
 const WEIGHTED_GRAPH_FILE = "weighted_graph.json";
 const DEFAULT_TRAVEL_MINUTES = 3;
-const TRANSFER_WALK_MINUTES = 3;
 const LINE_COLORS = {
   "수도권": { "1호선":"#0052A4", "2호선":"#00A84D", "3호선":"#EF7C1C", "4호선":"#00A5DE", "5호선":"#996CAC", "6호선":"#CD7C2F", "7호선":"#747F00", "8호선":"#E6186C", "9호선":"#BDB092", "GTX-A":"#9A6292", "경강":"#003DA5", "경의중앙":"#77C4A3", "경춘":"#0C8E72", "공항":"#0090D2", "김포골드라인":"#A17800", "서해선":"#8FC31F", "수인분당":"#F5A200", "신림선":"#6789CA", "신분당":"#D4003B", "에버라인":"#6FB245", "우이신설":"#B7C452", "의정부":"#FDA600", "인천1호선":"#6496D8", "인천2호선":"#ED8B00", "자기부상":"#FFCD12" },
   "부산": { "1호선":"#F06A00", "2호선":"#81BF48", "3호선":"#BB8C00", "4호선":"#217DCB", "동해":"#0054A6", "부산김해경전철":"#8652A1" },
@@ -47,7 +46,7 @@ function buildGraph() {
     if (!graph.has(from)) return;
     Object.entries(edges || {}).forEach(([to, data]) => {
       if (!graph.has(to)) return;
-      const weight = data?.source === "transfer" ? TRANSFER_WALK_MINUTES : Number(data?.minutes) || DEFAULT_TRAVEL_MINUTES;
+      const weight = Number(data?.minutes) || DEFAULT_TRAVEL_MINUTES;
       graph.get(from).push({ to, line: stationById.get(to)?.line || stationById.get(from)?.line || "노선 정보", weight, transfer: data?.source === "transfer" });
     });
   });
@@ -133,21 +132,29 @@ async function loadStationCatalog() {
   setRouteStatus(`역 ${stationById.size.toLocaleString("ko-KR")}개와 시간표 그래프 준비 완료. 출발역과 도착역을 입력하세요.`, "ready");
 }
 
-// Dijkstra minimizes timetable-derived minutes stored on weighted graph edges.
-function dijkstra(start, end) {
-  const queue = [{ station: start, cost: 0, line: null, transfers: 0, path: [] }];
-  const best = new Map([[`${start}|`, 0]]);
+// Compare both route criteria so an equal primary cost has a predictable fallback.
+function compareRouteCost(left, right, preference) {
+  const leftCost = preference === "transfers" ? [left.transfers, left.minutes] : [left.minutes, left.transfers];
+  const rightCost = preference === "transfers" ? [right.transfers, right.minutes] : [right.minutes, right.transfers];
+  return leftCost[0] - rightCost[0] || leftCost[1] - rightCost[1];
+}
+function findRoute(start, end, preference = "time") {
+  const startStop = { id: start, line: stationById.get(start)?.line || "노선 정보", minutes: 0, transfer: false };
+  const queue = [{ station: start, minutes: 0, transfers: 0, path: [startStop] }];
+  const best = new Map([[start, { minutes: 0, transfers: 0 }]]);
   while (queue.length) {
-    queue.sort((a, b) => a.cost - b.cost);
+    queue.sort((a, b) => compareRouteCost(a, b, preference));
     const state = queue.shift();
-    if (state.station === end) return { path: [...state.path, { id: end, line: state.line, minutes: 0 }], totalMinutes: state.cost };
+    if (compareRouteCost(state, best.get(state.station), preference) > 0) continue;
+    if (state.station === end) return { path: state.path, totalMinutes: state.minutes, transfers: state.transfers, preference };
     for (const edge of graph.get(state.station) || []) {
-      const isTransfer = Boolean(edge.transfer || (state.line && state.line !== edge.line));
-      const nextCost = state.cost + edge.weight;
-      const key = `${edge.to}|${edge.line}`;
-      if (nextCost < (best.get(key) ?? Infinity)) {
-        best.set(key, nextCost);
-        queue.push({ station: edge.to, cost: nextCost, line: edge.line, transfers: state.transfers + Number(isTransfer), path: [...state.path, { id: state.station, line: edge.line, transfer: Boolean(edge.transfer), minutes: edge.weight }] });
+      const next = { minutes: state.minutes + edge.weight, transfers: state.transfers + Number(edge.transfer) };
+      if (compareRouteCost(next, best.get(edge.to) || { minutes: Infinity, transfers: Infinity }, preference) < 0) {
+        best.set(edge.to, next);
+        const path = [...state.path];
+        path[path.length - 1] = { ...path.at(-1), minutes: edge.weight, transfer: edge.transfer };
+        path.push({ id: edge.to, line: stationById.get(edge.to)?.line || edge.line, minutes: 0, transfer: false });
+        queue.push({ station: edge.to, ...next, path });
       }
     }
   }
@@ -155,7 +162,7 @@ function dijkstra(start, end) {
 }
 
 // Function group: each calculation has a deterministic input/output relationship.
-const calculateTransfers = path => path.slice(1).reduce((count, stop, index) => count + Number(stop.line !== path[index].line), 0);
+const calculateTransfers = path => path.slice(0, -1).reduce((count, stop) => count + Number(stop.transfer), 0);
 const formatTime = date => date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
 
 async function fetchTago(endpoint, params = {}) {
@@ -333,12 +340,13 @@ function routeTimes(path, departureSeconds) {
   });
 }
 function renderResult(result) {
-  const { path, totalMinutes } = result;
-  const transfers = calculateTransfers(path); const stops = path.length;
+  const { path, totalMinutes, preference } = result;
+  const transfers = result.transfers ?? calculateTransfers(path); const stops = path.length;
   const now = new Date(); const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
   currentRoute = { path, transfers, stops, totalMinutes, departureSeconds: nowSeconds, origin: els.origin.value.trim(), destination: els.destination.value.trim() };
   els.empty.classList.add("hidden"); els.results.classList.remove("hidden"); els.title.textContent = `${currentRoute.origin} → ${currentRoute.destination}`;
   els.metrics.innerHTML = [["fa-right-left","환승횟수",`${transfers}<small>회</small>`],["fa-train-subway","총 이동역",`${stops - 1}<small>개 역</small>`],["fa-clock","현재 시간",formatScheduleTime(nowSeconds)],["fa-train-subway","출발 시간",formatScheduleTime(nowSeconds)],["fa-clock","총 이동시간",`${totalMinutes}<small>분</small>`],["fa-flag-checkered","최종 도착 예정",formatScheduleTime(nowSeconds + totalMinutes * 60)]].map(([icon,label,value]) => `<div class="metric glass-card"><i class="fa-solid ${icon}"></i><p class="metric-label">${label}</p><strong>${value}</strong></div>`).join("");
+  document.querySelector(".route-card-head h2").textContent = preference === "transfers" ? "최소 환승 경로" : "최단 시간 경로";
   const stationName = stop => stationById.get(stop.id)?.name || "역 정보 없음";
   const stopRegion = stop => stationById.get(stop.id)?.region || selectedRegion;
   const times = routeTimes(path, nowSeconds);
@@ -349,11 +357,19 @@ function renderResult(result) {
   updateRouteSchedule(currentRoute);
 }
 function renderRouteTimeline(path, times, stopRegion, stationName) {
-  els.timeline.innerHTML = path.map((stop, i) => {
-    const transfer = i > 0 && stop.line !== path[i - 1].line;
+  const items = [];
+  for (let i = 0; i < path.length; i += 1) {
+    const stop = path[i]; const next = path[i + 1];
+    const isSameStationTransfer = Boolean(stop.transfer && next && stationName(stop) === stationName(next));
     const label = i ? "도착 예정" : "출발";
-    return `<div class="timeline-stop ${transfer ? "transfer" : ""}" style="--route-color:${lineColor(stopRegion(stop), stop.line)}"><span class="stop-dot"></span><div class="stop-name">${stationNameMarkup(stationName(stop))}</div><div class="stop-line">${escapeHTML(stop.line)} · ${label} ${formatScheduleTime(times[i])}</div>${transfer ? `<div class="transfer-note">환승: 다음 열차 시간표 반영</div>` : ""}</div>`;
-  }).join("");
+    if (isSameStationTransfer) {
+      items.push(`<div class="timeline-stop transfer" style="--route-color:${lineColor(stopRegion(next), next.line)}"><span class="stop-dot"></span><div class="stop-name">${stationNameMarkup(stationName(stop))}</div><div class="stop-line">${escapeHTML(stop.line)} → ${escapeHTML(next.line)} · 환승 완료 ${formatScheduleTime(times[i + 1])}</div><div class="transfer-note">환승: 다음 열차 시간표 반영</div></div>`);
+      i += 1;
+      continue;
+    }
+    items.push(`<div class="timeline-stop" style="--route-color:${lineColor(stopRegion(stop), stop.line)}"><span class="stop-dot"></span><div class="stop-name">${stationNameMarkup(stationName(stop))}</div><div class="stop-line">${escapeHTML(stop.line)} · ${label} ${formatScheduleTime(times[i])}</div></div>`);
+  }
+  els.timeline.innerHTML = items.join("");
 }
 
 function timeToSeconds(value, after = 0) {
@@ -407,7 +423,7 @@ async function updateRouteSchedule(route) {
     for (let index = 1; index < route.path.length - 1; index += 1) {
       const edge = route.path[index];
       if (edge.transfer) {
-        times[index + 1] = times[index] + TRANSFER_WALK_MINUTES * 60;
+        times[index + 1] = times[index] + (edge.minutes || DEFAULT_TRAVEL_MINUTES) * 60;
         continue;
       }
       const train = await getNextTrain(edge.id, times[index], route.path[index + 1]?.id);
@@ -492,10 +508,12 @@ function submitRoute(event) {
     if (!differentStations) { setRouteStatus("출발역과 도착역은 서로 달라야 합니다.", "error"); return toast("서로 다른 역을 선택해주세요."); }
     if (!graph.has(originRecord.id) || !graph.has(destinationRecord.id)) { setRouteStatus("선택한 역의 경로 그래프 정보를 찾지 못했습니다.", "error"); return toast("목록에서 제공하는 역을 선택해주세요."); }
     const startedAt = performance.now();
-    const result = dijkstra(originRecord.id, destinationRecord.id);
+    const preference = document.querySelector("input[name='preference']:checked")?.value || "time";
+    const result = findRoute(originRecord.id, destinationRecord.id, preference);
     if (!result) { setRouteStatus("두 역 사이의 연결 경로를 찾지 못했습니다. 다른 노선의 역을 선택해보세요.", "error"); return toast("두 역 사이의 연결 경로를 찾지 못했습니다. 다른 노선의 역을 선택해보세요."); }
     saveRecent(origin, destination); renderResult(result);
-    setRouteStatus(`${origin}에서 ${destination}까지 최단 경로를 ${(performance.now() - startedAt).toFixed(1)}ms에 찾았습니다.`, "ready");
+    const routeLabel = preference === "transfers" ? "최소 환승 경로" : "최단 시간 경로";
+    setRouteStatus(`${origin}에서 ${destination}까지 ${routeLabel}를 ${(performance.now() - startedAt).toFixed(1)}ms에 찾았습니다.`, "ready");
   } catch (error) {
     console.error("Route calculation failed", error);
     const message = `경로 계산 중 오류가 발생했습니다: ${error.message || "알 수 없는 오류"}`;
