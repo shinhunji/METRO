@@ -2,8 +2,8 @@
 
 // Vercel keeps the TAGO key server-side and proxies browser requests.
 const API_BASE = "/api/tago";
-const GRAPH_FILE = "subway_graph.json";
-const GRAPH_CACHE_KEY = "metro-subway-graph-v1";
+const CATALOG_FILE = "station_catalog.json";
+const WEIGHTED_GRAPH_FILE = "weighted_graph.json";
 const DEFAULT_TRAVEL_MINUTES = 3;
 const TRANSFER_MINUTES = 5;
 const LINE_COLORS = {
@@ -27,8 +27,7 @@ let NETWORK_TREE = {};
 
 const els = {};
 let graph = new Map();
-let subwayGraph = { version: 2, generatedAt: null, regions: {}, stationGraph: {} };
-let graphBuildPromise = null;
+let subwayGraph = { version: 1, generatedAt: null, stationGraph: {} };
 let allStations = []; let currentRoute = null; let facilityStation = "origin"; let selectedRegion = ""; let extrasRequestInFlight = false; let extrasRefreshTimer = null; let stationById = new Map(); let regionStations = [];
 const selections = { origin: { line: "" }, destination: { line: "" } };
 const selectedStationRecords = { origin: null, destination: null };
@@ -94,11 +93,6 @@ function buildStationTree(items) {
   });
   return tree;
 }
-function catalogToRegions(tree) {
-  return Object.fromEntries(Object.entries(tree).map(([region, lines]) => [region, {
-    lines: Object.fromEntries(Object.entries(lines).map(([line, stations]) => [line, { stations: stations.map(({ id, name }) => ({ id, name })) }]))
-  }]));
-}
 function regionsToCatalog(regions) {
   const tree = {};
   Object.entries(regions || {}).forEach(([region, data]) => {
@@ -110,17 +104,14 @@ function regionsToCatalog(regions) {
   });
   return tree;
 }
-function persistGraph() { localStorage.setItem(GRAPH_CACHE_KEY, JSON.stringify(subwayGraph)); }
 async function loadStationCatalog() {
   els.originSelector.innerHTML = els.destinationSelector.innerHTML = `<p class="selector-loading"><i class="fa-solid fa-spinner fa-spin"></i> 실제 역 목록을 불러오는 중...</p>`;
-  await loadGraphSnapshot();
-  NETWORK_TREE = regionsToCatalog(subwayGraph.regions);
+  const [catalog, weights] = await Promise.all([fetchStaticJson(CATALOG_FILE), fetchStaticJson(WEIGHTED_GRAPH_FILE)]);
+  NETWORK_TREE = regionsToCatalog(catalog?.regions);
+  subwayGraph = weights?.stationGraph ? weights : subwayGraph;
   if (!Object.keys(NETWORK_TREE).length) {
-    // An empty subwayStationName returns the complete nationwide station catalog (1,108 records).
     const stationItems = await fetchTago("GetKwrdFndSubwaySttnList", { subwayStationName: "", numOfRows: "10000", pageNo: "1" });
     NETWORK_TREE = buildStationTree(stationItems);
-    subwayGraph = { ...subwayGraph, version: 2, catalogUpdatedAt: new Date().toISOString(), regions: catalogToRegions(NETWORK_TREE) };
-    persistGraph();
   }
   if (!Object.keys(NETWORK_TREE).length) {
     const message = "실제 역 목록을 불러오지 못했습니다. TAGO 역 조회 API 주소와 요청 항목을 확인해주세요.";
@@ -132,7 +123,6 @@ async function loadStationCatalog() {
   els.region.innerHTML = Object.keys(NETWORK_TREE).map(region => `<option value="${escapeHTML(region)}">${escapeHTML(region)}</option>`).join(""); els.region.value = selectedRegion;
   Object.keys(selections).forEach(role => { selections[role].line = Object.keys(NETWORK_TREE[selectedRegion])[0]; });
   buildGraph(); renderTree("origin"); renderTree("destination");
-  buildRegionGraph(selectedRegion);
 }
 
 // Dijkstra minimizes timetable-derived minutes stored on weighted graph edges.
@@ -221,48 +211,9 @@ function segmentMinutes(fromRows, toRows) {
   return median(durations);
 }
 async function loadGraphSnapshot() {
-  try {
-    const cached = JSON.parse(localStorage.getItem(GRAPH_CACHE_KEY) || "null");
-    if (cached?.stationGraph) subwayGraph = { version: 2, regions: {}, ...cached };
-    else {
-      const response = await fetch(GRAPH_FILE);
-      const fileGraph = response.ok ? await response.json() : null;
-      if (fileGraph?.stationGraph) subwayGraph = { version: 2, regions: {}, ...fileGraph };
-    }
-  } catch (error) { console.warn("Could not load subway graph", error); }
+  return fetchStaticJson(WEIGHTED_GRAPH_FILE);
 }
-async function buildRegionGraph(region, forceRefresh = false) {
-  if (graphBuildPromise) return graphBuildPromise;
-  const stations = Object.values(NETWORK_TREE[region] || {}).flat();
-  const hasRegionGraph = stations.some(station => Object.keys(subwayGraph.stationGraph?.[station.id] || {}).length);
-  if (!stations.length || (!forceRefresh && hasRegionGraph)) return;
-  graphBuildPromise = (async () => {
-    const rowsByStation = new Map(); const dayType = currentDayType();
-    const jobs = [];
-    stations.forEach(station => ["U", "D"].forEach(direction => jobs.push(async () => {
-      const key = `timetable:${station.id}:${dayType}:${direction}`;
-      const rows = await getCachedTago(key, "GetSubwaySttnAcctoSchdulList", { subwayStationId: station.id, dailyTypeCode: dayType, upDownTypeCode: direction, numOfRows: "10000" }, TIMETABLE_CACHE_TTL, forceRefresh);
-      rowsByStation.set(`${station.id}:${direction}`, rows || []);
-    })));
-    const workers = Array.from({ length: 5 }, async () => { while (jobs.length) await jobs.shift()(); });
-    await Promise.all(workers);
-    const stationGraph = { ...(subwayGraph.stationGraph || {}) };
-    Object.values(NETWORK_TREE[region] || {}).forEach(line => line.forEach((station, index) => {
-      if (!line[index + 1]) return;
-      const next = line[index + 1];
-      ["U", "D"].forEach(direction => {
-        const minutes = segmentMinutes(rowsByStation.get(`${station.id}:${direction}`), rowsByStation.get(`${next.id}:${direction}`));
-        if (minutes) { (stationGraph[station.id] ||= {})[next.id] = { minutes, source: "TAGO timetable" }; }
-        const reverseMinutes = segmentMinutes(rowsByStation.get(`${next.id}:${direction}`), rowsByStation.get(`${station.id}:${direction}`));
-        if (reverseMinutes) { (stationGraph[next.id] ||= {})[station.id] = { minutes: reverseMinutes, source: "TAGO timetable" }; }
-      });
-    }));
-    subwayGraph = { ...subwayGraph, version: 2, generatedAt: new Date().toISOString(), regions: catalogToRegions(NETWORK_TREE), stationGraph };
-    persistGraph();
-    buildGraph();
-  })().catch(error => console.warn("Could not build timetable graph", error)).finally(() => { graphBuildPromise = null; });
-  return graphBuildPromise;
-}
+async function fetchStaticJson(file) { try { const response = await fetch(file, { cache: "force-cache" }); return response.ok ? response.json() : null; } catch (error) { console.warn(`Could not load ${file}`, error); return null; } }
 async function getCachedTago(key, endpoint, params, ttl, forceRefresh = false) {
   const cached = readCache(key);
   if (!forceRefresh && cached !== null) return cached;
@@ -410,12 +361,12 @@ function startExtrasRefresh() {
 async function refreshDetails() {
   if (!currentRoute || extrasRequestInFlight) return;
   els.refresh.disabled = true;
-  try { await buildRegionGraph(selectedRegion, true); await loadExtras(true); toast("시간표 그래프와 역 정보를 새로고침했습니다."); }
+  try { await loadExtras(true); toast("역 정보를 새로고침했습니다. 시간표 그래프는 정적 JSON 데이터를 사용합니다."); }
   finally { els.refresh.disabled = false; }
 }
 function updateFavoriteButton() { const key = `${els.origin.value.trim()}|${els.destination.value.trim()}`; const active = favorites.some(item => item.key === key); els.favorite.classList.toggle("active", active); els.favorite.innerHTML = `<i class="fa-${active ? "solid" : "regular"} fa-star"></i><span>${active ? "저장됨" : "즐겨찾기"}</span>`; }
 function saveRecent(origin, destination) { recent = [origin, destination, ...recent.filter(value => value !== origin && value !== destination)].slice(0, 5); localStorage.setItem("metro-recent", JSON.stringify(recent)); renderRecents(); }
-async function submitRoute(event) { event?.preventDefault(); const origin = els.origin.value.trim(); const destination = els.destination.value.trim(); const originRecord = selectedStationRecords.origin; const destinationRecord = selectedStationRecords.destination; const inputsValid = Boolean(origin && destination); const stationsSelected = Boolean(originRecord && destinationRecord); const differentStations = originRecord?.id !== destinationRecord?.id; if (!inputsValid) return toast("출발역과 도착역을 모두 선택해주세요."); if (!stationsSelected) return toast("자동완성 또는 노선·역 목록에서 실제 역을 선택해주세요."); if (!differentStations) return toast("서로 다른 역을 선택해주세요."); if (!graph.has(originRecord.id) || !graph.has(destinationRecord.id)) return toast("목록에서 제공하는 역을 선택해주세요."); toast("TAGO 시간표로 이동시간 그래프를 확인하는 중..."); await buildRegionGraph(selectedRegion); const result = dijkstra(originRecord.id, destinationRecord.id); if (!result) return toast("두 역 사이의 연결 경로를 찾지 못했습니다."); saveRecent(origin, destination); renderResult(result); }
+function submitRoute(event) { event?.preventDefault(); const origin = els.origin.value.trim(); const destination = els.destination.value.trim(); const originRecord = selectedStationRecords.origin; const destinationRecord = selectedStationRecords.destination; const inputsValid = Boolean(origin && destination); const stationsSelected = Boolean(originRecord && destinationRecord); const differentStations = originRecord?.id !== destinationRecord?.id; if (!inputsValid) return toast("출발역과 도착역을 모두 선택해주세요."); if (!stationsSelected) return toast("자동완성 또는 노선·역 목록에서 실제 역을 선택해주세요."); if (!differentStations) return toast("서로 다른 역을 선택해주세요."); if (!graph.has(originRecord.id) || !graph.has(destinationRecord.id)) return toast("목록에서 제공하는 역을 선택해주세요."); const result = dijkstra(originRecord.id, destinationRecord.id); if (!result) return toast("두 역 사이의 연결 경로를 찾지 못했습니다."); saveRecent(origin, destination); renderResult(result); }
 
 function bindEvents() {
   document.addEventListener("click", event => { const line = event.target.closest("[data-line]"); const station = event.target.closest("[data-station-id]"); const pick = event.target.closest("[data-pick-id]"); if (line) { const role = line.dataset.roleSelector; selections[role].line = line.dataset.line; renderTree(role); } else if (station || pick) { const button = station || pick; const role = button.dataset.roleSelector || button.dataset.target; const record = findStationRecord(button.dataset.stationId || button.dataset.pickId); if (record) { (role === "origin" ? els.origin : els.destination).value = record.name; selectedStationRecords[role] = record; toast(`${record.name}역을 ${role === "origin" ? "출발" : "도착"}역으로 선택했습니다.`); } closeSuggestions(); } const recentButton = event.target.closest("[data-recent]"); if (recentButton) { const input = !els.origin.value ? els.origin : els.destination; input.value = recentButton.dataset.recent; } });
@@ -423,7 +374,7 @@ function bindEvents() {
   document.addEventListener("click", event => { if (!event.target.closest(".station-field")) closeSuggestions(); });
   document.querySelectorAll("[data-clear]").forEach(button => button.addEventListener("click", () => { (button.dataset.clear === "origin" ? els.origin : els.destination).value = ""; selectedStationRecords[button.dataset.clear] = null; }));
   els.swap.addEventListener("click", () => { [els.origin.value, els.destination.value] = [els.destination.value, els.origin.value]; [selectedStationRecords.origin, selectedStationRecords.destination] = [selectedStationRecords.destination, selectedStationRecords.origin]; });
-  els.region.addEventListener("change", () => { selectedRegion = els.region.value; Object.keys(selections).forEach(role => { selections[role].line = Object.keys(NETWORK_TREE[selectedRegion])[0]; selectedStationRecords[role] = null; renderTree(role); }); els.origin.value = ""; els.destination.value = ""; buildGraph(); closeSuggestions(); buildRegionGraph(selectedRegion); toast(`${selectedRegion} 지역 역만 검색할 수 있습니다.`); });
+  els.region.addEventListener("change", () => { selectedRegion = els.region.value; Object.keys(selections).forEach(role => { selections[role].line = Object.keys(NETWORK_TREE[selectedRegion])[0]; selectedStationRecords[role] = null; renderTree(role); }); els.origin.value = ""; els.destination.value = ""; buildGraph(); closeSuggestions(); toast(`${selectedRegion} 지역 역만 검색할 수 있습니다.`); });
   els.form.addEventListener("submit", submitRoute);
   els.theme.addEventListener("click", () => { const dark = document.body.classList.toggle("dark"); els.theme.innerHTML = `<i class="fa-solid fa-${dark ? "sun" : "moon"}"></i>`; localStorage.setItem("metro-dark", dark); });
   els.refresh.addEventListener("click", refreshDetails);
