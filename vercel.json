@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "outputDirectory": "프로젝트",
+  "functions": {
+    "api/tago.js": {
+      "maxDuration": 10
+    }
+  }
+}
