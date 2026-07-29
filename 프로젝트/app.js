@@ -5,7 +5,6 @@ const API_BASE = "/api/tago";
 const CATALOG_FILE = "station_catalog.json";
 const WEIGHTED_GRAPH_FILE = "weighted_graph.json";
 const DEFAULT_TRAVEL_MINUTES = 3;
-const TRANSFER_MINUTES = 5;
 const LINE_COLORS = {
   "수도권": { "1호선":"#0052A4", "2호선":"#00A84D", "3호선":"#EF7C1C", "4호선":"#00A5DE", "5호선":"#996CAC", "6호선":"#CD7C2F", "7호선":"#747F00", "8호선":"#E6186C", "9호선":"#BDB092", "GTX-A":"#9A6292", "경강":"#003DA5", "경의중앙":"#77C4A3", "경춘":"#0C8E72", "공항":"#0090D2", "김포골드라인":"#A17800", "서해선":"#8FC31F", "수인분당":"#F5A200", "신림선":"#6789CA", "신분당":"#D4003B", "에버라인":"#6FB245", "우이신설":"#B7C452", "의정부":"#FDA600", "인천1호선":"#6496D8", "인천2호선":"#ED8B00", "자기부상":"#FFCD12" },
   "부산": { "1호선":"#F06A00", "2호선":"#81BF48", "3호선":"#BB8C00", "4호선":"#217DCB", "동해":"#0054A6", "부산김해경전철":"#8652A1" },
@@ -38,6 +37,7 @@ const DETAIL_CACHE_LIMIT = 8;
 const DETAIL_ROW_LIMIT = 30;
 const FACILITY_DISPLAY_LIMIT = 12;
 const BUS_ROUTES_PER_EXIT_LIMIT = 6;
+const timetableCache = new Map();
 
 const $ = (selector) => document.querySelector(selector);
 function escapeHTML(value) { return String(value ?? "").replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[char])); }
@@ -66,10 +66,10 @@ function buildGraph() {
     });
     grouped.forEach(stations => {
       for (let index = 1; index < stations.length; index += 1) {
-        // A physical transfer is a short, but non-zero, edge between explicitly listed station IDs.
+        // Timetable lookup supplies the actual wait at this transfer station.
         const from = stations[0]; const to = stations[index];
-        graph.get(from.id).push({ to: to.id, line: to.line, weight: TRANSFER_MINUTES, transfer: true });
-        graph.get(to.id).push({ to: from.id, line: from.line, weight: TRANSFER_MINUTES, transfer: true });
+        graph.get(from.id).push({ to: to.id, line: to.line, weight: 0, transfer: true });
+        graph.get(to.id).push({ to: from.id, line: from.line, weight: 0, transfer: true });
       }
     });
   });
@@ -364,10 +364,18 @@ function renderResult(result) {
   const stationName = stop => stationById.get(stop.id)?.name || "역 정보 없음";
   const stopRegion = stop => stationById.get(stop.id)?.region || selectedRegion;
   const times = routeTimes(path, nowSeconds);
-  els.timeline.innerHTML = path.map((stop, i) => { const transfer = i > 0 && stop.line !== path[i - 1].line; const label = i ? "도착 예정" : "출발"; return `<div class="timeline-stop ${transfer ? "transfer" : ""}" style="--route-color:${lineColor(stopRegion(stop), stop.line)}"><span class="stop-dot"></span><div class="stop-name">${stationNameMarkup(stationName(stop))}</div><div class="stop-line">${escapeHTML(stop.line)} · ${label} ${formatScheduleTime(times[i])}</div>${transfer ? `<div class="transfer-note">환승 +${TRANSFER_MINUTES}분</div>` : ""}</div>`; }).join("");
+  renderRouteTimeline(path, times, stopRegion, stationName);
   els.stationDetails.innerHTML = [path[0], path.at(-1)].map((stop, i) => `<article class="station-card glass-card"><p class="eyebrow">${i ? "DESTINATION" : "ORIGIN"} STATION</p><h3>${stationNameMarkup(stationName(stop))}</h3><p class="station-line"><span class="line-color" style="background:${lineColor(stopRegion(stop), stop.line)}"></span> ${escapeHTML(stop.line)}</p><div class="station-info"><div>이전역<b>${i ? stationNameMarkup(stationName(path.at(-2))) : "출발역"}</b></div><div>다음역<b>${i ? "도착" : path[1] ? stationNameMarkup(stationName(path[1])) : "-"}</b></div><div>${i ? "도착 예정" : "출발 시간"}<b>${formatScheduleTime(times[i ? times.length - 1 : 0])}</b></div><div>이동시간<b>${totalMinutes}분</b></div></div></article>`).join("");
-  document.getElementById("route-badge").textContent = `도착 예정 ${formatScheduleTime(times.at(-1))}`;
+  document.getElementById("route-badge").textContent = "다음 열차 시간표 확인 중";
   updateFavoriteButton(); startExtrasRefresh(); els.results.scrollIntoView({ behavior: "smooth", block: "start" });
+  updateRouteSchedule(currentRoute);
+}
+function renderRouteTimeline(path, times, stopRegion, stationName) {
+  els.timeline.innerHTML = path.map((stop, i) => {
+    const transfer = i > 0 && stop.line !== path[i - 1].line;
+    const label = i ? "도착 예정" : "출발";
+    return `<div class="timeline-stop ${transfer ? "transfer" : ""}" style="--route-color:${lineColor(stopRegion(stop), stop.line)}"><span class="stop-dot"></span><div class="stop-name">${stationNameMarkup(stationName(stop))}</div><div class="stop-line">${escapeHTML(stop.line)} · ${label} ${formatScheduleTime(times[i])}</div>${transfer ? `<div class="transfer-note">환승: 다음 열차 시간표 반영</div>` : ""}</div>`;
+  }).join("");
 }
 
 function timeToSeconds(value, after = 0) {
@@ -383,31 +391,54 @@ function formatScheduleTime(seconds) {
 function nextScheduleRow(rows, after, terminalId = "") {
   return normaliseItems(rows).filter(row => !terminalId || row.endSubwayStationId === terminalId).map(row => ({ row, time: timeToSeconds(row.depTime, after) })).filter(item => item.time !== null).sort((a, b) => a.time - b.time)[0] || null;
 }
-async function loadOriginSchedule(route, forceRefresh) {
-  const origin = selectedStationRecords.origin;
-  if (!origin) return null;
-  const dayType = currentDayType();
-  const schedules = await getCachedTago(`timetable:${origin.id}:${dayType}:D`, "GetSubwaySttnAcctoSchdulList", { subwayStationId: origin.id, dailyTypeCode: dayType, upDownTypeCode: "D", numOfRows: "10000" }, TIMETABLE_CACHE_TTL, forceRefresh);
-  const now = new Date(); const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-  const departure = nextScheduleRow(schedules, nowSeconds);
-  return departure ? { time: departure.time, terminal: departure.row.endSubwayStationName || departure.row.endSubwayStationId || "" } : null;
-}
-function updateOriginSchedule(route, schedule) {
-  if (currentRoute !== route) return;
-  const metricCards = els.metrics.querySelectorAll(".metric");
-  if (!schedule) {
-    if (metricCards[2]) metricCards[2].innerHTML = `<i class="fa-solid fa-clock"></i><p class="metric-label">출발역 다음 열차</p><strong><small>시간표 없음</small></strong>`;
-    const originCard = els.stationDetails.querySelector(".station-card");
-    if (originCard) originCard.querySelector(".station-info div:nth-child(3) b").textContent = "시간표 없음";
-    document.getElementById("route-badge").textContent = "출발역 시간표 없음";
-    return;
+async function getNextTrain(stationId, after) {
+  const dayType = currentDayType(); const key = `${stationId}:${dayType}`;
+  let schedules = timetableCache.get(key);
+  if (!schedules) {
+    const [up, down] = await Promise.all(["U", "D"].map(upDownTypeCode => fetchTago("GetSubwaySttnAcctoSchdulList", { subwayStationId: stationId, dailyTypeCode: dayType, upDownTypeCode, numOfRows: "10000" })));
+    schedules = [...normaliseItems(up), ...normaliseItems(down)];
+    timetableCache.set(key, schedules);
   }
-  const departure = formatScheduleTime(schedule.time);
-  route.nextDeparture = departure;
-  if (metricCards[2]) metricCards[2].innerHTML = `<i class="fa-solid fa-clock"></i><p class="metric-label">출발역 다음 열차</p><strong>${departure}<small>${escapeHTML(schedule.terminal || "하행 (D)")}</small></strong>`;
-  const originCard = els.stationDetails.querySelector(".station-card");
-  if (originCard) originCard.querySelector(".station-info div:nth-child(3) b").textContent = departure;
-  document.getElementById("route-badge").textContent = `다음 열차 ${departure}`;
+  return nextScheduleRow(schedules, after);
+}
+async function updateRouteSchedule(route) {
+  const stationName = stop => stationById.get(stop.id)?.name || "역 정보 없음";
+  const stopRegion = stop => stationById.get(stop.id)?.region || selectedRegion;
+  const times = routeTimes(route.path, route.departureSeconds);
+  try {
+    const firstTrain = await getNextTrain(route.path[0].id, route.departureSeconds);
+    if (currentRoute !== route) return;
+    if (!firstTrain) throw new Error("출발역 다음 열차 시간표를 찾지 못했습니다.");
+    times[0] = firstTrain.time;
+    for (let index = 1; index < times.length; index += 1) times[index] = times[index - 1] + (route.path[index - 1].minutes || 0) * 60;
+    for (let index = 0; index < route.path.length - 1; index += 1) {
+      if (!route.path[index].transfer) continue;
+      const boardingIndex = index + 1;
+      const transferTrain = await getNextTrain(route.path[boardingIndex].id, times[index]);
+      if (currentRoute !== route) return;
+      if (!transferTrain) continue;
+      times[boardingIndex] = transferTrain.time;
+      for (let next = boardingIndex + 1; next < times.length; next += 1) times[next] = times[next - 1] + (route.path[next - 1].minutes || 0) * 60;
+    }
+    const actualMinutes = Math.max(0, Math.round((times.at(-1) - route.departureSeconds) / 60));
+    route.departureSeconds = times[0]; route.totalMinutes = actualMinutes; route.times = times;
+    const metricCards = els.metrics.querySelectorAll(".metric");
+    if (metricCards[3]) metricCards[3].innerHTML = `<i class="fa-solid fa-train-subway"></i><p class="metric-label">다음 열차 출발</p><strong>${formatScheduleTime(times[0])}</strong>`;
+    if (metricCards[4]) metricCards[4].innerHTML = `<i class="fa-solid fa-clock"></i><p class="metric-label">총 이동시간</p><strong>${actualMinutes}<small>분</small></strong>`;
+    if (metricCards[5]) metricCards[5].innerHTML = `<i class="fa-solid fa-flag-checkered"></i><p class="metric-label">최종 도착 예정</p><strong>${formatScheduleTime(times.at(-1))}</strong>`;
+    const stationCards = els.stationDetails.querySelectorAll(".station-card");
+    if (stationCards[0]) stationCards[0].querySelector(".station-info div:nth-child(3) b").textContent = formatScheduleTime(times[0]);
+    if (stationCards[1]) {
+      stationCards[1].querySelector(".station-info div:nth-child(3) b").textContent = formatScheduleTime(times.at(-1));
+      stationCards[1].querySelector(".station-info div:nth-child(4) b").textContent = `${actualMinutes}분`;
+    }
+    renderRouteTimeline(route.path, times, stopRegion, stationName);
+    document.getElementById("route-badge").textContent = `도착 예정 ${formatScheduleTime(times.at(-1))}`;
+    setRouteStatus(`다음 열차와 환승역 다음 열차를 반영했습니다. ${formatScheduleTime(times.at(-1))} 도착 예정입니다.`, "ready");
+  } catch (error) {
+    console.warn("Could not apply live timetable", error);
+    if (currentRoute === route) document.getElementById("route-badge").textContent = "시간표 확인 실패 - 평균 이동시간 표시";
+  }
 }
 
 function normaliseItems(items) { return Array.isArray(items) ? items : items ? [items] : []; }
