@@ -32,8 +32,9 @@
           <div class="station-field origin"><label for="origin-input"><i class="fa-solid fa-circle-dot"></i> 출발역</label><div class="input-wrap"><input id="origin-input" data-role="origin" placeholder="출발역을 입력하거나 목록에서 선택" aria-label="출발역" /><button class="clear-input" type="button" data-clear="origin" aria-label="출발역 지우기"><i class="fa-solid fa-xmark"></i></button></div><div id="origin-suggestions" class="suggestions"></div><div id="origin-selector" class="station-selector selector-popover" aria-label="출발역 노선과 역 선택"></div></div>
           <button id="swap-button" class="swap-button" type="button" aria-label="출발역과 도착역 바꾸기"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>
           <div class="station-field destination"><label for="destination-input"><i class="fa-solid fa-location-dot"></i> 도착역</label><div class="input-wrap"><input id="destination-input" data-role="destination" placeholder="도착역을 입력하거나 목록에서 선택" aria-label="도착역" /><button class="clear-input" type="button" data-clear="destination" aria-label="도착역 지우기"><i class="fa-solid fa-xmark"></i></button></div><div id="destination-suggestions" class="suggestions"></div><div id="destination-selector" class="station-selector selector-popover" aria-label="도착역 노선과 역 선택"></div></div>
-          <button class="search-button" type="submit"><i class="fa-solid fa-magnifying-glass"></i><span>길찾기</span></button>
-        </form>
+           <button id="search-button" class="search-button" type="submit" disabled aria-disabled="true"><i class="fa-solid fa-spinner fa-spin"></i><span>역 데이터 준비 중...</span></button>
+         </form>
+         <p id="route-status" class="route-status" role="status" aria-live="polite">전국 역과 시간표 그래프를 준비하고 있어요.</p>
         <div class="quick-row"><span>빠른 선택</span><div id="recent-searches" class="chip-list"></div><button id="favorites-button" class="text-button" type="button"><i class="fa-regular fa-star"></i> 즐겨찾기</button></div>
       </section>
 

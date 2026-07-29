@@ -28,7 +28,7 @@ let NETWORK_TREE = {};
 const els = {};
 let graph = new Map();
 let subwayGraph = { version: 1, generatedAt: null, stationGraph: {} };
-let allStations = []; let currentRoute = null; let facilityStation = "origin"; let selectedRegion = ""; let extrasRequestInFlight = false; let extrasRefreshTimer = null; let stationById = new Map(); let regionStations = []; let catalogReady = false; let staticDataError = "";
+let allStations = []; let currentRoute = null; let facilityStation = "origin"; let selectedRegion = ""; let extrasRequestInFlight = false; let extrasRefreshTimer = null; let stationById = new Map(); let regionStations = []; let catalogReady = false; let routeCalculationInFlight = false; let staticDataError = "";
 const selections = { origin: { line: "" }, destination: { line: "" } };
 const selectedStationRecords = { origin: null, destination: null };
 let favorites = JSON.parse(localStorage.getItem("metro-favorites") || "[]");
@@ -104,7 +104,25 @@ function regionsToCatalog(regions) {
   });
   return tree;
 }
+function setRouteStatus(message, state = "info") {
+  els.routeStatus.textContent = message;
+  els.routeStatus.dataset.state = state;
+}
+function setSearchState(state) {
+  const button = els.searchButton;
+  const label = button.querySelector("span");
+  const icon = button.querySelector("i");
+  const busy = state === "loading" || state === "calculating";
+  button.disabled = busy || state === "error";
+  button.setAttribute("aria-disabled", String(button.disabled));
+  if (state === "loading") { icon.className = "fa-solid fa-spinner fa-spin"; label.textContent = "역 데이터 준비 중..."; }
+  else if (state === "calculating") { icon.className = "fa-solid fa-spinner fa-spin"; label.textContent = "경로 계산 중..."; }
+  else if (state === "ready") { icon.className = "fa-solid fa-magnifying-glass"; label.textContent = "길찾기"; }
+  else { icon.className = "fa-solid fa-triangle-exclamation"; label.textContent = "역 데이터 오류"; }
+}
 async function loadStationCatalog() {
+  setSearchState("loading");
+  setRouteStatus("전국 역과 시간표 그래프를 불러오는 중입니다.");
   els.originSelector.innerHTML = els.destinationSelector.innerHTML = `<p class="selector-loading"><i class="fa-solid fa-spinner fa-spin"></i> 실제 역 목록을 불러오는 중...</p>`;
   try {
     const [catalog, weights] = await Promise.all([fetchStaticJson(CATALOG_FILE), fetchStaticJson(WEIGHTED_GRAPH_FILE)]);
@@ -118,6 +136,8 @@ async function loadStationCatalog() {
   if (!Object.keys(NETWORK_TREE).length) {
     const message = staticDataError || "실제 역 목록을 불러오지 못했습니다. TAGO 역 조회 API 주소와 요청 항목을 확인해주세요.";
     els.region.innerHTML = `<option>${message}</option>`; els.region.disabled = true; els.originSelector.innerHTML = els.destinationSelector.innerHTML = `<p class="selector-error"><i class="fa-solid fa-triangle-exclamation"></i> ${message}</p>`;
+    setSearchState("error");
+    setRouteStatus(message, "error");
     toast("TAGO API에서 역 목록을 가져오지 못했습니다.");
     return;
   }
@@ -126,6 +146,8 @@ async function loadStationCatalog() {
   Object.keys(selections).forEach(role => { selections[role].line = Object.keys(NETWORK_TREE[selectedRegion])[0]; });
   buildGraph(); renderTree("origin"); renderTree("destination");
   catalogReady = true;
+  setSearchState("ready");
+  setRouteStatus(`역 ${stationById.size.toLocaleString("ko-KR")}개와 시간표 그래프 준비 완료. 출발역과 도착역을 입력하세요.`, "ready");
 }
 
 // Dijkstra minimizes timetable-derived minutes stored on weighted graph edges.
@@ -278,8 +300,12 @@ function resolveStationInput(role) {
     selectedStationRecords[role] = selectedLineMatch;
     return selectedLineMatch;
   }
-  if (!matches.length && name) toast(`${name}은(는) 현재 ${selectedRegion} 역 목록에 없습니다. 목록에서 역을 선택해주세요.`);
-  else if (matches.length > 1) toast(`${name}은(는) 여러 노선에 있습니다. 자동완성에서 노선을 선택해주세요.`);
+  if (!matches.length && name) {
+    const reason = name === "부산역" ? "TAGO 제공 역 목록에 부산역이 없어 경로를 계산할 수 없습니다. 인근 실제 역을 선택해주세요." : `${name}은(는) 현재 ${selectedRegion} 역 목록에 없습니다. 목록에서 역을 선택해주세요.`;
+    setRouteStatus(reason, "error");
+    toast(reason);
+  }
+  else if (matches.length > 1) { const reason = `${name}은(는) 여러 노선에 있습니다. 자동완성에서 노선을 선택해주세요.`; setRouteStatus(reason, "error"); toast(reason); }
   return null;
 }
 function stationNameMarkup(name) {
@@ -402,10 +428,29 @@ async function refreshDetails() {
 }
 function updateFavoriteButton() { const key = `${els.origin.value.trim()}|${els.destination.value.trim()}`; const active = favorites.some(item => item.key === key); els.favorite.classList.toggle("active", active); els.favorite.innerHTML = `<i class="fa-${active ? "solid" : "regular"} fa-star"></i><span>${active ? "저장됨" : "즐겨찾기"}</span>`; }
 function saveRecent(origin, destination) { recent = [origin, destination, ...recent.filter(value => value !== origin && value !== destination)].slice(0, 5); localStorage.setItem("metro-recent", JSON.stringify(recent)); renderRecents(); }
-function submitRoute(event) { event?.preventDefault(); if (!catalogReady) return toast("역 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요."); const origin = els.origin.value.trim(); const destination = els.destination.value.trim(); if (!origin || !destination) return toast("출발역과 도착역을 모두 입력해주세요."); const originRecord = resolveStationInput("origin"); const destinationRecord = resolveStationInput("destination"); const differentStations = originRecord?.id !== destinationRecord?.id; if (!originRecord || !destinationRecord) return; if (!differentStations) return toast("서로 다른 역을 선택해주세요."); if (!graph.has(originRecord.id) || !graph.has(destinationRecord.id)) return toast("목록에서 제공하는 역을 선택해주세요."); const result = dijkstra(originRecord.id, destinationRecord.id); if (!result) return toast("두 역 사이의 연결 경로를 찾지 못했습니다. 다른 노선의 역을 선택해보세요."); saveRecent(origin, destination); renderResult(result); }
+function submitRoute(event) {
+  event?.preventDefault();
+  if (!catalogReady) { setRouteStatus("역 데이터를 아직 준비하고 있습니다. 잠시만 기다려주세요."); return toast("역 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요."); }
+  if (routeCalculationInFlight) return;
+  const origin = els.origin.value.trim(); const destination = els.destination.value.trim();
+  if (!origin || !destination) { setRouteStatus("출발역과 도착역을 모두 입력해주세요.", "error"); return toast("출발역과 도착역을 모두 입력해주세요."); }
+  routeCalculationInFlight = true; setSearchState("calculating"); setRouteStatus("시간표 가중치 그래프에서 최단 경로를 계산하고 있습니다.");
+  requestAnimationFrame(() => {
+    try {
+      const originRecord = resolveStationInput("origin"); const destinationRecord = resolveStationInput("destination");
+      const differentStations = originRecord?.id !== destinationRecord?.id;
+      if (!originRecord || !destinationRecord) return;
+      if (!differentStations) { setRouteStatus("출발역과 도착역은 서로 달라야 합니다.", "error"); return toast("서로 다른 역을 선택해주세요."); }
+      if (!graph.has(originRecord.id) || !graph.has(destinationRecord.id)) { setRouteStatus("선택한 역의 경로 그래프 정보를 찾지 못했습니다.", "error"); return toast("목록에서 제공하는 역을 선택해주세요."); }
+      const result = dijkstra(originRecord.id, destinationRecord.id);
+      if (!result) { setRouteStatus("두 역 사이의 연결 경로를 찾지 못했습니다. 다른 노선의 역을 선택해보세요.", "error"); return toast("두 역 사이의 연결 경로를 찾지 못했습니다. 다른 노선의 역을 선택해보세요."); }
+      saveRecent(origin, destination); renderResult(result); setRouteStatus(`${origin}에서 ${destination}까지 최단 경로를 찾았습니다.`, "ready");
+    } finally { routeCalculationInFlight = false; setSearchState("ready"); }
+  });
+}
 
 function bindEvents() {
-  document.addEventListener("click", event => { const line = event.target.closest("[data-line]"); const station = event.target.closest("[data-station-id]"); const pick = event.target.closest("[data-pick-id]"); if (line) { const role = line.dataset.roleSelector; selections[role].line = line.dataset.line; renderTree(role); } else if (station || pick) { const button = station || pick; const role = button.dataset.roleSelector || button.dataset.target; const record = findStationRecord(button.dataset.stationId || button.dataset.pickId); if (record) { (role === "origin" ? els.origin : els.destination).value = record.name; selectedStationRecords[role] = record; toast(`${record.name}역을 ${role === "origin" ? "출발" : "도착"}역으로 선택했습니다.`); } closeSuggestions(); } const recentButton = event.target.closest("[data-recent]"); if (recentButton) { const input = !els.origin.value ? els.origin : els.destination; input.value = recentButton.dataset.recent; } });
+  document.addEventListener("click", event => { const line = event.target.closest("[data-line]"); const station = event.target.closest("[data-station-id]"); const pick = event.target.closest("[data-pick-id]"); if (line) { const role = line.dataset.roleSelector; selections[role].line = line.dataset.line; renderTree(role); } else if (station || pick) { const button = station || pick; const role = button.dataset.roleSelector || button.dataset.target; const record = findStationRecord(button.dataset.stationId || button.dataset.pickId); if (record) { (role === "origin" ? els.origin : els.destination).value = record.name; selectedStationRecords[role] = record; const message = `${record.name}역을 ${role === "origin" ? "출발" : "도착"}역으로 선택했습니다.`; setRouteStatus(message, "ready"); toast(message); } closeSuggestions(); } const recentButton = event.target.closest("[data-recent]"); if (recentButton) { const input = !els.origin.value ? els.origin : els.destination; input.value = recentButton.dataset.recent; } });
   [els.origin, els.destination].forEach(input => input.addEventListener("input", () => { selectedStationRecords[input.dataset.role] = null; showSuggestions(input); }));
   document.addEventListener("click", event => { if (!event.target.closest(".station-field")) closeSuggestions(); });
   document.querySelectorAll("[data-clear]").forEach(button => button.addEventListener("click", () => { (button.dataset.clear === "origin" ? els.origin : els.destination).value = ""; selectedStationRecords[button.dataset.clear] = null; }));
@@ -420,7 +465,7 @@ function bindEvents() {
   document.querySelectorAll(".station-tab").forEach(tab => tab.addEventListener("click", () => { facilityStation = tab.dataset.facilityStation; document.querySelectorAll(".station-tab").forEach(button => button.classList.toggle("active", button === tab)); renderFacilities(); }));
 }
 function init() {
-  Object.assign(els, { region:$("#region-select"), originSelector:$("#origin-selector"), destinationSelector:$("#destination-selector"), origin:$("#origin-input"), destination:$("#destination-input"), originSuggestions:$("#origin-suggestions"), destinationSuggestions:$("#destination-suggestions"), form:$("#route-form"), swap:$("#swap-button"), recents:$("#recent-searches"), empty:$("#empty-state"), results:$("#result-section"), title:$("#result-title"), metrics:$("#metric-grid"), timeline:$("#route-timeline"), stationDetails:$("#station-details"), originBuses:$("#origin-buses"), destinationBuses:$("#destination-buses"), facilities:$("#facilities-content"), filters:$("#facility-filters"), favorite:$("#favorite-route"), refresh:$("#refresh-details"), favoritesButton:$("#favorites-button"), theme:$("#theme-toggle"), toast:$("#toast") });
+  Object.assign(els, { region:$("#region-select"), originSelector:$("#origin-selector"), destinationSelector:$("#destination-selector"), origin:$("#origin-input"), destination:$("#destination-input"), originSuggestions:$("#origin-suggestions"), destinationSuggestions:$("#destination-suggestions"), form:$("#route-form"), searchButton:$("#search-button"), routeStatus:$("#route-status"), swap:$("#swap-button"), recents:$("#recent-searches"), empty:$("#empty-state"), results:$("#result-section"), title:$("#result-title"), metrics:$("#metric-grid"), timeline:$("#route-timeline"), stationDetails:$("#station-details"), originBuses:$("#origin-buses"), destinationBuses:$("#destination-buses"), facilities:$("#facilities-content"), filters:$("#facility-filters"), favorite:$("#favorite-route"), refresh:$("#refresh-details"), favoritesButton:$("#favorites-button"), theme:$("#theme-toggle"), toast:$("#toast") });
   renderRecents(); renderFilters(); bindEvents(); loadStationCatalog(); if (localStorage.getItem("metro-dark") === "true") els.theme.click();
   const tick = () => { $("#live-time").textContent = new Date().toLocaleTimeString("ko-KR", { hour12:false }); }; tick(); setInterval(tick, 1000); setTimeout(() => $("#loading-screen").classList.add("done"), 550);
 }
