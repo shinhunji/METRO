@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Gowun+Dodum&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
   <link rel="stylesheet" href="styles.css" />
+  <script>if (new URLSearchParams(location.search).get("ppt") === "1") document.documentElement.classList.add("ppt-mode");</script>
 </head>
 <body>
   <div id="loading-screen" class="loading-screen" aria-live="polite">
@@ -26,7 +27,7 @@
   <main id="top" class="app-shell">
     <section class="content-panel">
       <section class="hero-card glass-card">
-        <div class="hero-intro"><p class="eyebrow">NATIONWIDE ROUTE FINDER</p><h1>어디로 <em>이동</em>하시나요?</h1><p>그래프 알고리즘으로 가장 알맞은 경로를 계산합니다.</p></div>
+        <div class="hero-intro"><p class="eyebrow">NATIONWIDE ROUTE FINDER</p><h1>어디로 <em>이동</em>하시나요?</h1><p>그래프 알고리즘으로 가장 알맞은 경로를 계산합니다.</p><p class="ppt-note"><i class="fa-solid fa-presentation-screen"></i> 발표 자료 촬영용 화면</p></div>
         <form id="route-form" class="route-form" autocomplete="off">
           <div class="region-field"><label for="region-select"><i class="fa-solid fa-map"></i> 이용 지역</label><select id="region-select" aria-label="이용 지역"><option>실제 역 목록을 불러오는 중...</option></select><p>지역을 한 번 선택하면 출발·도착역 모두 같은 지역에서만 검색됩니다.</p></div>
           <div class="station-field origin"><label for="origin-input"><i class="fa-solid fa-circle-dot"></i> 출발역</label><div class="input-wrap"><input id="origin-input" data-role="origin" placeholder="출발역을 입력하거나 목록에서 선택" aria-label="출발역" /><button class="clear-input" type="button" data-clear="origin" aria-label="출발역 지우기"><i class="fa-solid fa-xmark"></i></button></div><div id="origin-suggestions" class="suggestions"></div><div id="origin-selector" class="station-selector selector-popover" aria-label="출발역 노선과 역 선택"></div></div>
