@@ -27,9 +27,9 @@ let NETWORK_TREE = {};
 
 const els = {};
 let graph = new Map();
-let subwayGraph = { version: 1, generatedAt: null, stationGraph: {} };
+let subwayGraph = { version: 2, generatedAt: null, regions: {}, stationGraph: {} };
 let graphBuildPromise = null;
-let allStations = []; let currentRoute = null; let facilityStation = "origin"; let selectedRegion = ""; let extrasRequestInFlight = false; let extrasRefreshTimer = null; let stationById = new Map();
+let allStations = []; let currentRoute = null; let facilityStation = "origin"; let selectedRegion = ""; let extrasRequestInFlight = false; let extrasRefreshTimer = null; let stationById = new Map(); let regionStations = [];
 const selections = { origin: { line: "" }, destination: { line: "" } };
 const selectedStationRecords = { origin: null, destination: null };
 let favorites = JSON.parse(localStorage.getItem("metro-favorites") || "[]");
@@ -69,6 +69,7 @@ function buildGraph() {
       }
     });
   });
+  regionStations = Object.values(NETWORK_TREE[selectedRegion] || {}).flat();
   allStations = [...stationById.values()].map(station => station.name).sort((a, b) => a.localeCompare(b, "ko"));
 }
 
@@ -93,11 +94,34 @@ function buildStationTree(items) {
   });
   return tree;
 }
+function catalogToRegions(tree) {
+  return Object.fromEntries(Object.entries(tree).map(([region, lines]) => [region, {
+    lines: Object.fromEntries(Object.entries(lines).map(([line, stations]) => [line, { stations: stations.map(({ id, name }) => ({ id, name })) }]))
+  }]));
+}
+function regionsToCatalog(regions) {
+  const tree = {};
+  Object.entries(regions || {}).forEach(([region, data]) => {
+    const lines = data?.lines || {};
+    tree[region] = {};
+    Object.entries(lines).forEach(([line, data]) => {
+      tree[region][line] = (data?.stations || []).map(station => ({ id: station.id, name: station.name, line, region }));
+    });
+  });
+  return tree;
+}
+function persistGraph() { localStorage.setItem(GRAPH_CACHE_KEY, JSON.stringify(subwayGraph)); }
 async function loadStationCatalog() {
   els.originSelector.innerHTML = els.destinationSelector.innerHTML = `<p class="selector-loading"><i class="fa-solid fa-spinner fa-spin"></i> 실제 역 목록을 불러오는 중...</p>`;
-  // An empty subwayStationName returns the complete nationwide station catalog (1,108 records).
-  const stationItems = await fetchTago("GetKwrdFndSubwaySttnList", { subwayStationName: "", numOfRows: "10000", pageNo: "1" });
-  NETWORK_TREE = buildStationTree(stationItems);
+  await loadGraphSnapshot();
+  NETWORK_TREE = regionsToCatalog(subwayGraph.regions);
+  if (!Object.keys(NETWORK_TREE).length) {
+    // An empty subwayStationName returns the complete nationwide station catalog (1,108 records).
+    const stationItems = await fetchTago("GetKwrdFndSubwaySttnList", { subwayStationName: "", numOfRows: "10000", pageNo: "1" });
+    NETWORK_TREE = buildStationTree(stationItems);
+    subwayGraph = { ...subwayGraph, version: 2, catalogUpdatedAt: new Date().toISOString(), regions: catalogToRegions(NETWORK_TREE) };
+    persistGraph();
+  }
   if (!Object.keys(NETWORK_TREE).length) {
     const message = "실제 역 목록을 불러오지 못했습니다. TAGO 역 조회 API 주소와 요청 항목을 확인해주세요.";
     els.region.innerHTML = `<option>${message}</option>`; els.region.disabled = true; els.originSelector.innerHTML = els.destinationSelector.innerHTML = `<p class="selector-error"><i class="fa-solid fa-triangle-exclamation"></i> ${message}</p>`;
@@ -107,7 +131,7 @@ async function loadStationCatalog() {
   selectedRegion = Object.keys(NETWORK_TREE)[0];
   els.region.innerHTML = Object.keys(NETWORK_TREE).map(region => `<option value="${escapeHTML(region)}">${escapeHTML(region)}</option>`).join(""); els.region.value = selectedRegion;
   Object.keys(selections).forEach(role => { selections[role].line = Object.keys(NETWORK_TREE[selectedRegion])[0]; });
-  await loadGraphSnapshot(); buildGraph(); renderTree("origin"); renderTree("destination");
+  buildGraph(); renderTree("origin"); renderTree("destination");
   buildRegionGraph(selectedRegion);
 }
 
@@ -199,11 +223,11 @@ function segmentMinutes(fromRows, toRows) {
 async function loadGraphSnapshot() {
   try {
     const cached = JSON.parse(localStorage.getItem(GRAPH_CACHE_KEY) || "null");
-    if (cached?.stationGraph) subwayGraph = cached;
+    if (cached?.stationGraph) subwayGraph = { version: 2, regions: {}, ...cached };
     else {
       const response = await fetch(GRAPH_FILE);
       const fileGraph = response.ok ? await response.json() : null;
-      if (fileGraph?.stationGraph) subwayGraph = fileGraph;
+      if (fileGraph?.stationGraph) subwayGraph = { version: 2, regions: {}, ...fileGraph };
     }
   } catch (error) { console.warn("Could not load subway graph", error); }
 }
@@ -233,8 +257,8 @@ async function buildRegionGraph(region, forceRefresh = false) {
         if (reverseMinutes) { (stationGraph[next.id] ||= {})[station.id] = { minutes: reverseMinutes, source: "TAGO timetable" }; }
       });
     }));
-    subwayGraph = { version: 1, generatedAt: new Date().toISOString(), stationGraph };
-    localStorage.setItem(GRAPH_CACHE_KEY, JSON.stringify(subwayGraph));
+    subwayGraph = { ...subwayGraph, version: 2, generatedAt: new Date().toISOString(), regions: catalogToRegions(NETWORK_TREE), stationGraph };
+    persistGraph();
     buildGraph();
   })().catch(error => console.warn("Could not build timetable graph", error)).finally(() => { graphBuildPromise = null; });
   return graphBuildPromise;
@@ -269,10 +293,7 @@ function renderTree(role) {
     <div class="selector-column"><p class="selector-label"><i class="fa-solid fa-location-dot"></i> ${role === "origin" ? "출발" : "도착"} 역</p><div class="selector-list">${stations.map(station => `<button class="selector-item station-option" data-station-id="${station.id}" data-role-selector="${role}"><span class="station-pin"></span><span class="station-name">${stationNameMarkup(station.name)}</span></button>`).join("")}</div></div>`;
 }
 function findStationRecord(id) {
-  for (const region of Object.values(NETWORK_TREE)) for (const stations of Object.values(region)) {
-    const record = stations.find(station => station.id === id); if (record) return record;
-  }
-  return null;
+  return stationById.get(id) || null;
 }
 function stationNameMarkup(name) {
   const match = String(name).match(/^(.*?)(\s*\([^)]*\))$/);
@@ -283,8 +304,7 @@ function renderRecents() { els.recents.innerHTML = recent.slice(0, 4).map(statio
 function stationLine(station) { const edge = graph.get(station)?.[0]; return edge?.line || "노선 정보"; }
 function showSuggestions(input) {
   const target = input.dataset.role === "origin" ? els.originSuggestions : els.destinationSuggestions;
-  const allowedStations = NETWORK_TREE[selectedRegion] ? Object.values(NETWORK_TREE[selectedRegion]).flat() : [];
-  const value = input.value.trim(); const matches = (value ? allowedStations.filter(station => station.name.includes(value)) : allowedStations).slice(0, 7);
+  const value = input.value.trim(); const matches = (value ? regionStations.filter(station => station.name.includes(value)) : regionStations).slice(0, 7);
   target.innerHTML = matches.map(station => `<button class="suggestion" data-pick-id="${station.id}" data-target="${input.dataset.role}"><span class="station-name">${stationNameMarkup(station.name)}</span><small>${escapeHTML(station.line)}</small></button>`).join(""); target.classList.toggle("show", matches.length > 0);
 }
 function closeSuggestions() { document.querySelectorAll(".suggestions").forEach(item => item.classList.remove("show")); }
@@ -403,7 +423,7 @@ function bindEvents() {
   document.addEventListener("click", event => { if (!event.target.closest(".station-field")) closeSuggestions(); });
   document.querySelectorAll("[data-clear]").forEach(button => button.addEventListener("click", () => { (button.dataset.clear === "origin" ? els.origin : els.destination).value = ""; selectedStationRecords[button.dataset.clear] = null; }));
   els.swap.addEventListener("click", () => { [els.origin.value, els.destination.value] = [els.destination.value, els.origin.value]; [selectedStationRecords.origin, selectedStationRecords.destination] = [selectedStationRecords.destination, selectedStationRecords.origin]; });
-  els.region.addEventListener("change", () => { selectedRegion = els.region.value; Object.keys(selections).forEach(role => { selections[role].line = Object.keys(NETWORK_TREE[selectedRegion])[0]; selectedStationRecords[role] = null; renderTree(role); }); els.origin.value = ""; els.destination.value = ""; closeSuggestions(); toast(`${selectedRegion} 지역 역만 검색할 수 있습니다.`); });
+  els.region.addEventListener("change", () => { selectedRegion = els.region.value; Object.keys(selections).forEach(role => { selections[role].line = Object.keys(NETWORK_TREE[selectedRegion])[0]; selectedStationRecords[role] = null; renderTree(role); }); els.origin.value = ""; els.destination.value = ""; buildGraph(); closeSuggestions(); buildRegionGraph(selectedRegion); toast(`${selectedRegion} 지역 역만 검색할 수 있습니다.`); });
   els.form.addEventListener("submit", submitRoute);
   els.theme.addEventListener("click", () => { const dark = document.body.classList.toggle("dark"); els.theme.innerHTML = `<i class="fa-solid fa-${dark ? "sun" : "moon"}"></i>`; localStorage.setItem("metro-dark", dark); });
   els.refresh.addEventListener("click", refreshDetails);
