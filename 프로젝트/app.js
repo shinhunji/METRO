@@ -435,18 +435,23 @@ function submitRoute(event) {
   const origin = els.origin.value.trim(); const destination = els.destination.value.trim();
   if (!origin || !destination) { setRouteStatus("출발역과 도착역을 모두 입력해주세요.", "error"); return toast("출발역과 도착역을 모두 입력해주세요."); }
   routeCalculationInFlight = true; setSearchState("calculating"); setRouteStatus("시간표 가중치 그래프에서 최단 경로를 계산하고 있습니다.");
-  requestAnimationFrame(() => {
-    try {
-      const originRecord = resolveStationInput("origin"); const destinationRecord = resolveStationInput("destination");
-      const differentStations = originRecord?.id !== destinationRecord?.id;
-      if (!originRecord || !destinationRecord) return;
-      if (!differentStations) { setRouteStatus("출발역과 도착역은 서로 달라야 합니다.", "error"); return toast("서로 다른 역을 선택해주세요."); }
-      if (!graph.has(originRecord.id) || !graph.has(destinationRecord.id)) { setRouteStatus("선택한 역의 경로 그래프 정보를 찾지 못했습니다.", "error"); return toast("목록에서 제공하는 역을 선택해주세요."); }
-      const result = dijkstra(originRecord.id, destinationRecord.id);
-      if (!result) { setRouteStatus("두 역 사이의 연결 경로를 찾지 못했습니다. 다른 노선의 역을 선택해보세요.", "error"); return toast("두 역 사이의 연결 경로를 찾지 못했습니다. 다른 노선의 역을 선택해보세요."); }
-      saveRecent(origin, destination); renderResult(result); setRouteStatus(`${origin}에서 ${destination}까지 최단 경로를 찾았습니다.`, "ready");
-    } finally { routeCalculationInFlight = false; setSearchState("ready"); }
-  });
+  try {
+    const originRecord = resolveStationInput("origin"); const destinationRecord = resolveStationInput("destination");
+    const differentStations = originRecord?.id !== destinationRecord?.id;
+    if (!originRecord || !destinationRecord) return;
+    if (!differentStations) { setRouteStatus("출발역과 도착역은 서로 달라야 합니다.", "error"); return toast("서로 다른 역을 선택해주세요."); }
+    if (!graph.has(originRecord.id) || !graph.has(destinationRecord.id)) { setRouteStatus("선택한 역의 경로 그래프 정보를 찾지 못했습니다.", "error"); return toast("목록에서 제공하는 역을 선택해주세요."); }
+    const startedAt = performance.now();
+    const result = dijkstra(originRecord.id, destinationRecord.id);
+    if (!result) { setRouteStatus("두 역 사이의 연결 경로를 찾지 못했습니다. 다른 노선의 역을 선택해보세요.", "error"); return toast("두 역 사이의 연결 경로를 찾지 못했습니다. 다른 노선의 역을 선택해보세요."); }
+    saveRecent(origin, destination); renderResult(result);
+    setRouteStatus(`${origin}에서 ${destination}까지 최단 경로를 ${(performance.now() - startedAt).toFixed(1)}ms에 찾았습니다.`, "ready");
+  } catch (error) {
+    console.error("Route calculation failed", error);
+    const message = `경로 계산 중 오류가 발생했습니다: ${error.message || "알 수 없는 오류"}`;
+    setRouteStatus(message, "error");
+    toast(message);
+  } finally { routeCalculationInFlight = false; setSearchState("ready"); }
 }
 
 function bindEvents() {
