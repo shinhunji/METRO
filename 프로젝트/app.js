@@ -28,7 +28,7 @@ let NETWORK_TREE = {};
 const els = {};
 let graph = new Map();
 let subwayGraph = { version: 1, generatedAt: null, stationGraph: {} };
-let allStations = []; let currentRoute = null; let facilityStation = "origin"; let selectedRegion = ""; let extrasRequestInFlight = false; let extrasRefreshTimer = null; let stationById = new Map(); let regionStations = []; let catalogReady = false;
+let allStations = []; let currentRoute = null; let facilityStation = "origin"; let selectedRegion = ""; let extrasRequestInFlight = false; let extrasRefreshTimer = null; let stationById = new Map(); let regionStations = []; let catalogReady = false; let staticDataError = "";
 const selections = { origin: { line: "" }, destination: { line: "" } };
 const selectedStationRecords = { origin: null, destination: null };
 let favorites = JSON.parse(localStorage.getItem("metro-favorites") || "[]");
@@ -116,7 +116,7 @@ async function loadStationCatalog() {
     }
   } catch (error) { console.error("Could not initialize station data", error); }
   if (!Object.keys(NETWORK_TREE).length) {
-    const message = "실제 역 목록을 불러오지 못했습니다. TAGO 역 조회 API 주소와 요청 항목을 확인해주세요.";
+    const message = staticDataError || "실제 역 목록을 불러오지 못했습니다. TAGO 역 조회 API 주소와 요청 항목을 확인해주세요.";
     els.region.innerHTML = `<option>${message}</option>`; els.region.disabled = true; els.originSelector.innerHTML = els.destinationSelector.innerHTML = `<p class="selector-error"><i class="fa-solid fa-triangle-exclamation"></i> ${message}</p>`;
     toast("TAGO API에서 역 목록을 가져오지 못했습니다.");
     return;
@@ -216,7 +216,22 @@ function segmentMinutes(fromRows, toRows) {
 async function loadGraphSnapshot() {
   return fetchStaticJson(WEIGHTED_GRAPH_FILE);
 }
-async function fetchStaticJson(file) { try { const response = await fetch(file, { cache: "force-cache" }); return response.ok ? response.json() : null; } catch (error) { console.warn(`Could not load ${file}`, error); return null; } }
+async function fetchStaticJson(file) {
+  try {
+    const response = await fetch(file, { cache: "force-cache" });
+    const contentType = response.headers.get("content-type") || "";
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!contentType.includes("application/json")) {
+      if (response.url.includes("vercel.com/sso-api")) throw new Error("Vercel 배포 보호가 JSON 요청을 로그인 페이지로 전환했습니다. Vercel Settings > Deployment Protection을 끄거나 사이트에 로그인해주세요.");
+      throw new Error("JSON 파일 대신 다른 페이지가 응답되었습니다.");
+    }
+    return response.json();
+  } catch (error) {
+    staticDataError = `정적 역 데이터를 불러오지 못했습니다: ${error.message}`;
+    console.warn(`Could not load ${file}`, error);
+    return null;
+  }
+}
 async function getCachedTago(key, endpoint, params, ttl, forceRefresh = false) {
   const cached = readCache(key);
   if (!forceRefresh && cached !== null) return cached;
