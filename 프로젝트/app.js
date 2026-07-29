@@ -5,6 +5,7 @@ const API_BASE = "/api/tago";
 const CATALOG_FILE = "station_catalog.json";
 const WEIGHTED_GRAPH_FILE = "weighted_graph.json";
 const DEFAULT_TRAVEL_MINUTES = 3;
+const TRANSFER_WALK_MINUTES = 3;
 const LINE_COLORS = {
   "수도권": { "1호선":"#0052A4", "2호선":"#00A84D", "3호선":"#EF7C1C", "4호선":"#00A5DE", "5호선":"#996CAC", "6호선":"#CD7C2F", "7호선":"#747F00", "8호선":"#E6186C", "9호선":"#BDB092", "GTX-A":"#9A6292", "경강":"#003DA5", "경의중앙":"#77C4A3", "경춘":"#0C8E72", "공항":"#0090D2", "김포골드라인":"#A17800", "서해선":"#8FC31F", "수인분당":"#F5A200", "신림선":"#6789CA", "신분당":"#D4003B", "에버라인":"#6FB245", "우이신설":"#B7C452", "의정부":"#FDA600", "인천1호선":"#6496D8", "인천2호선":"#ED8B00", "자기부상":"#FFCD12" },
   "부산": { "1호선":"#F06A00", "2호선":"#81BF48", "3호선":"#BB8C00", "4호선":"#217DCB", "동해":"#0054A6", "부산김해경전철":"#8652A1" },
@@ -12,15 +13,6 @@ const LINE_COLORS = {
   "광주": { "1호선":"#009088" },
   "대전": { "1호선":"#007448" }
 };
-// Only these known interchange groups may link separate lines. Equal names alone never connect.
-const TRANSFER_STATIONS = {
-  "수도권": ["서울역", "시청", "종로3가", "동대문", "신설동", "동묘앞", "청량리", "신도림", "가산디지털단지", "노량진", "대방", "공덕", "홍대입구", "왕십리", "강남", "교대", "사당", "이수", "고속터미널", "잠실", "잠실새내", "건대입구", "신촌", "합정", "여의도", "영등포구청", "석계", "태릉입구", "군자", "상봉", "회기", "용산", "수원", "인천", "부평", "부천", "김포공항", "디지털미디어시티", "강남구청", "선릉", "도곡", "복정", "모란", "미금", "정자", "판교", "금정", "초지", "원인재", "검암", "계양", "주안", "회룡", "의정부", "도봉산", "광운대", "옥수", "이촌", "망우", "구로", "금천구청", "오금", "천호", "강동구청", "마곡나루", "까치산", "연신내", "불광", "충무로", "약수", "동대문역사문화공원", "을지로3가", "을지로4가", "충정로", "신길", "동작", "총신대입구", "석촌", "석촌고분", "종합운동장", "삼성", "신논현", "논현", "신사", "청구", "신금호", "미아사거리", "미아", "길음", "보문", "성신여대입구", "안암", "고려대", "월곡", "돌곶이", "상월곡", "화랑대", "먹골", "중화", "면목", "사가정", "용마산", "중곡", "어린이대공원", "뚝섬", "성수", "한양대", "압구정", "학동", "언주", "선정릉", "한티", "구룡", "개포동", "대모산입구", "수서", "가락시장", "문정", "장지", "산성", "남한산성입구", "단대오거리", "신흥", "수진", "태평"],
-  "부산": ["서면", "연산", "수영", "덕천", "동래", "미남", "교대", "부전", "벡스코", "사상", "대저", "거제", "부암", "양산"],
-  "대구": ["반월당", "명덕", "청라언덕", "신남", "만촌", "동대구", "대구역", "서대구", "구미", "경산"],
-  "광주": [],
-  "대전": []
-};
-
 // API로 받은 전국 역 데이터는 대한민국 -> 지역 -> 노선 -> 역 트리 객체로 변환됩니다.
 let NETWORK_TREE = {};
 
@@ -47,30 +39,16 @@ function lineColor(region, line) { return LINE_COLORS[region]?.[line] || "#0b76d
 function buildGraph() {
   graph = new Map();
   stationById = new Map();
-  const connect = (from, to, line) => {
-    if (!graph.has(from)) graph.set(from, []); if (!graph.has(to)) graph.set(to, []);
-    const weight = graphWeight(from, to, DEFAULT_TRAVEL_MINUTES);
-    graph.get(from).push({ to, line, weight });
-    graph.get(to).push({ to: from, line, weight });
-  };
   Object.values(NETWORK_TREE).forEach(region => Object.entries(region).forEach(([line, stations]) => {
-    stations.forEach(station => { stationById.set(station.id, station); if (!graph.has(station.id)) graph.set(station.id, []); });
-    for (let i = 0; i < stations.length - 1; i += 1) connect(stations[i].id, stations[i + 1].id, line);
+    stations.forEach(station => { stationById.set(station.id, { ...station, line }); graph.set(station.id, []); });
   }));
-  Object.entries(TRANSFER_STATIONS).forEach(([region, names]) => {
-    const allowedNames = new Set(names);
-    const grouped = new Map();
-    [...stationById.values()].filter(station => station.region === region && allowedNames.has(station.name)).forEach(station => {
-      if (!grouped.has(station.name)) grouped.set(station.name, []);
-      grouped.get(station.name).push(station);
-    });
-    grouped.forEach(stations => {
-      for (let index = 1; index < stations.length; index += 1) {
-        // Timetable lookup supplies the actual wait at this transfer station.
-        const from = stations[0]; const to = stations[index];
-        graph.get(from.id).push({ to: to.id, line: to.line, weight: 0, transfer: true });
-        graph.get(to.id).push({ to: from.id, line: from.line, weight: 0, transfer: true });
-      }
+  // Use the static graph as-is: each direction has its own timetable-derived weight.
+  Object.entries(subwayGraph.stationGraph || {}).forEach(([from, edges]) => {
+    if (!graph.has(from)) return;
+    Object.entries(edges || {}).forEach(([to, data]) => {
+      if (!graph.has(to)) return;
+      const weight = data?.source === "transfer" ? TRANSFER_WALK_MINUTES : Number(data?.minutes) || DEFAULT_TRAVEL_MINUTES;
+      graph.get(from).push({ to, line: stationById.get(to)?.line || stationById.get(from)?.line || "노선 정보", weight, transfer: data?.source === "transfer" });
     });
   });
   regionStations = Object.values(NETWORK_TREE[selectedRegion] || {}).flat();
@@ -391,7 +369,7 @@ function formatScheduleTime(seconds) {
 function nextScheduleRow(rows, after, terminalId = "") {
   return normaliseItems(rows).filter(row => !terminalId || row.endSubwayStationId === terminalId).map(row => ({ row, time: timeToSeconds(row.depTime, after) })).filter(item => item.time !== null).sort((a, b) => a.time - b.time)[0] || null;
 }
-async function getNextTrain(stationId, after) {
+async function getStationSchedules(stationId) {
   const dayType = currentDayType(); const key = `${stationId}:${dayType}`;
   let schedules = timetableCache.get(key);
   if (!schedules) {
@@ -399,26 +377,43 @@ async function getNextTrain(stationId, after) {
     schedules = [...normaliseItems(up), ...normaliseItems(down)];
     timetableCache.set(key, schedules);
   }
-  return nextScheduleRow(schedules, after);
+  return schedules;
+}
+async function getNextTrain(stationId, after, nextStationId = "") {
+  const schedules = await getStationSchedules(stationId);
+  if (!nextStationId) return nextScheduleRow(schedules, after);
+  const nextSchedules = await getStationSchedules(nextStationId);
+  const candidates = normaliseItems(schedules).map(row => {
+    const time = timeToSeconds(row.depTime, after);
+    const terminalId = row.endSubwayStationId || "";
+    if (time === null || !terminalId) return null;
+    const nextStop = nextScheduleRow(nextSchedules, time, terminalId);
+    // A matching terminal at the next route stop identifies the train direction.
+    if (!nextStop || nextStop.time - time > 20 * 60) return null;
+    return { row, time, nextTime: nextStop.time };
+  }).filter(Boolean).sort((a, b) => a.time - b.time);
+  return candidates[0] || nextScheduleRow(schedules, after);
 }
 async function updateRouteSchedule(route) {
   const stationName = stop => stationById.get(stop.id)?.name || "역 정보 없음";
   const stopRegion = stop => stationById.get(stop.id)?.region || selectedRegion;
   const times = routeTimes(route.path, route.departureSeconds);
   try {
-    const firstTrain = await getNextTrain(route.path[0].id, route.departureSeconds);
+    const firstTrain = await getNextTrain(route.path[0].id, route.departureSeconds, route.path[1]?.id);
     if (currentRoute !== route) return;
     if (!firstTrain) throw new Error("출발역 다음 열차 시간표를 찾지 못했습니다.");
     times[0] = firstTrain.time;
-    for (let index = 1; index < times.length; index += 1) times[index] = times[index - 1] + (route.path[index - 1].minutes || 0) * 60;
-    for (let index = 0; index < route.path.length - 1; index += 1) {
-      if (!route.path[index].transfer) continue;
-      const boardingIndex = index + 1;
-      const transferTrain = await getNextTrain(route.path[boardingIndex].id, times[index]);
+    if (times.length > 1) times[1] = firstTrain.nextTime || times[0] + (route.path[0].minutes || DEFAULT_TRAVEL_MINUTES) * 60;
+    for (let index = 1; index < route.path.length - 1; index += 1) {
+      const edge = route.path[index];
+      if (edge.transfer) {
+        times[index + 1] = times[index] + TRANSFER_WALK_MINUTES * 60;
+        continue;
+      }
+      const train = await getNextTrain(edge.id, times[index], route.path[index + 1]?.id);
       if (currentRoute !== route) return;
-      if (!transferTrain) continue;
-      times[boardingIndex] = transferTrain.time;
-      for (let next = boardingIndex + 1; next < times.length; next += 1) times[next] = times[next - 1] + (route.path[next - 1].minutes || 0) * 60;
+      const fallback = times[index] + (edge.minutes || DEFAULT_TRAVEL_MINUTES) * 60;
+      times[index + 1] = train?.nextTime || (train ? train.time + (edge.minutes || DEFAULT_TRAVEL_MINUTES) * 60 : fallback);
     }
     const actualMinutes = Math.max(0, Math.round((times.at(-1) - route.departureSeconds) / 60));
     route.departureSeconds = times[0]; route.totalMinutes = actualMinutes; route.times = times;
@@ -434,7 +429,7 @@ async function updateRouteSchedule(route) {
     }
     renderRouteTimeline(route.path, times, stopRegion, stationName);
     document.getElementById("route-badge").textContent = `도착 예정 ${formatScheduleTime(times.at(-1))}`;
-    setRouteStatus(`다음 열차와 환승역 다음 열차를 반영했습니다. ${formatScheduleTime(times.at(-1))} 도착 예정입니다.`, "ready");
+    setRouteStatus(`다음 열차와 환승역 다음 열차를 반영한 추정값입니다. ${formatScheduleTime(times.at(-1))} 도착 예정입니다.`, "ready");
   } catch (error) {
     console.warn("Could not apply live timetable", error);
     if (currentRoute === route) document.getElementById("route-badge").textContent = "시간표 확인 실패 - 평균 이동시간 표시";
