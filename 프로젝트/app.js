@@ -249,6 +249,24 @@ function renderTree(role) {
 function findStationRecord(id) {
   return stationById.get(id) || null;
 }
+function resolveStationInput(role) {
+  const input = role === "origin" ? els.origin : els.destination;
+  const name = input.value.trim();
+  if (selectedStationRecords[role]?.name === name) return selectedStationRecords[role];
+  const matches = regionStations.filter(station => station.name === name);
+  if (matches.length === 1) {
+    selectedStationRecords[role] = matches[0];
+    return matches[0];
+  }
+  const selectedLineMatch = matches.find(station => station.line === selections[role].line);
+  if (selectedLineMatch) {
+    selectedStationRecords[role] = selectedLineMatch;
+    return selectedLineMatch;
+  }
+  if (!matches.length && name) toast(`${name}은(는) 현재 ${selectedRegion} 역 목록에 없습니다. 목록에서 역을 선택해주세요.`);
+  else if (matches.length > 1) toast(`${name}은(는) 여러 노선에 있습니다. 자동완성에서 노선을 선택해주세요.`);
+  return null;
+}
 function stationNameMarkup(name) {
   const match = String(name).match(/^(.*?)(\s*\([^)]*\))$/);
   if (!match) return `<span class="station-name-main">${escapeHTML(name)}</span>`;
@@ -369,7 +387,7 @@ async function refreshDetails() {
 }
 function updateFavoriteButton() { const key = `${els.origin.value.trim()}|${els.destination.value.trim()}`; const active = favorites.some(item => item.key === key); els.favorite.classList.toggle("active", active); els.favorite.innerHTML = `<i class="fa-${active ? "solid" : "regular"} fa-star"></i><span>${active ? "저장됨" : "즐겨찾기"}</span>`; }
 function saveRecent(origin, destination) { recent = [origin, destination, ...recent.filter(value => value !== origin && value !== destination)].slice(0, 5); localStorage.setItem("metro-recent", JSON.stringify(recent)); renderRecents(); }
-function submitRoute(event) { event?.preventDefault(); if (!catalogReady) return toast("역 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요."); const origin = els.origin.value.trim(); const destination = els.destination.value.trim(); const originRecord = selectedStationRecords.origin; const destinationRecord = selectedStationRecords.destination; const inputsValid = Boolean(origin && destination); const stationsSelected = Boolean(originRecord && destinationRecord); const differentStations = originRecord?.id !== destinationRecord?.id; if (!inputsValid) return toast("출발역과 도착역을 모두 선택해주세요."); if (!stationsSelected) return toast("자동완성 또는 노선·역 목록에서 실제 역을 선택해주세요."); if (!differentStations) return toast("서로 다른 역을 선택해주세요."); if (!graph.has(originRecord.id) || !graph.has(destinationRecord.id)) return toast("목록에서 제공하는 역을 선택해주세요."); const result = dijkstra(originRecord.id, destinationRecord.id); if (!result) return toast("두 역 사이의 연결 경로를 찾지 못했습니다."); saveRecent(origin, destination); renderResult(result); }
+function submitRoute(event) { event?.preventDefault(); if (!catalogReady) return toast("역 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요."); const origin = els.origin.value.trim(); const destination = els.destination.value.trim(); if (!origin || !destination) return toast("출발역과 도착역을 모두 입력해주세요."); const originRecord = resolveStationInput("origin"); const destinationRecord = resolveStationInput("destination"); const differentStations = originRecord?.id !== destinationRecord?.id; if (!originRecord || !destinationRecord) return; if (!differentStations) return toast("서로 다른 역을 선택해주세요."); if (!graph.has(originRecord.id) || !graph.has(destinationRecord.id)) return toast("목록에서 제공하는 역을 선택해주세요."); const result = dijkstra(originRecord.id, destinationRecord.id); if (!result) return toast("두 역 사이의 연결 경로를 찾지 못했습니다. 다른 노선의 역을 선택해보세요."); saveRecent(origin, destination); renderResult(result); }
 
 function bindEvents() {
   document.addEventListener("click", event => { const line = event.target.closest("[data-line]"); const station = event.target.closest("[data-station-id]"); const pick = event.target.closest("[data-pick-id]"); if (line) { const role = line.dataset.roleSelector; selections[role].line = line.dataset.line; renderTree(role); } else if (station || pick) { const button = station || pick; const role = button.dataset.roleSelector || button.dataset.target; const record = findStationRecord(button.dataset.stationId || button.dataset.pickId); if (record) { (role === "origin" ? els.origin : els.destination).value = record.name; selectedStationRecords[role] = record; toast(`${record.name}역을 ${role === "origin" ? "출발" : "도착"}역으로 선택했습니다.`); } closeSuggestions(); } const recentButton = event.target.closest("[data-recent]"); if (recentButton) { const input = !els.origin.value ? els.origin : els.destination; input.value = recentButton.dataset.recent; } });

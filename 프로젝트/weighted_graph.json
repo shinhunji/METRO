@@ -1,12 +1,28 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-29T01:38:27.345Z",
+  "generatedAt": "2026-07-29T01:56:03.947Z",
   "dayType": "01",
   "stationGraph": {
     "MTRARA1A01": {
       "MTRARA1A02": {
         "minutes": 5,
         "source": "TAGO timetable"
+      },
+      "MTRGXAX106": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRS11150": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRS14426": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRKRK4P313": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRARA1A02": {
@@ -17,6 +33,18 @@
       "MTRARA1A03": {
         "minutes": 4,
         "source": "TAGO timetable"
+      },
+      "MTRKRK4K312": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRS152530": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRS162627": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRARA1A03": {
@@ -27,6 +55,14 @@
       "MTRARA1A04": {
         "minutes": 4,
         "source": "TAGO timetable"
+      },
+      "MTRKRK4K314": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRS12239": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRARA1A04": {
@@ -37,6 +73,14 @@
       "MTRARA1A042": {
         "minutes": 6,
         "source": "TAGO timetable"
+      },
+      "MTRKRK4K316": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRS162619": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRARA1A042": {
@@ -47,6 +91,10 @@
       "MTRARA1A05": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS990905": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRARA1A05": {
@@ -57,6 +105,18 @@
       "MTRARA1A06": {
         "minutes": 7,
         "source": "TAGO timetable"
+      },
+      "MTRGMG1G109": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRS152513": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRS990902": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRARA1A06": {
@@ -67,6 +127,10 @@
       "MTRARA1A07": {
         "minutes": 6,
         "source": "TAGO timetable"
+      },
+      "MTRICI1110": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRARA1A07": {
@@ -77,6 +141,10 @@
       "MTRARA1A071": {
         "minutes": 5,
         "source": "TAGO timetable"
+      },
+      "MTRICI2207": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRARA1A071": {
@@ -126,19 +194,23 @@
       },
       "MTRARA1A11": {
         "minutes": 3,
-        "source": "TAGO timetable"
+        "source": "catalog fallback"
       }
     },
     "MTRARA1A11": {
       "MTRARA1A10": {
-        "minutes": 7,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRDXD14305": {
       "MTRDXD14306": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS172734": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRDXD14306": {
@@ -149,6 +221,10 @@
       "MTRDXD14307": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS990925": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRDXD14307": {
@@ -159,6 +235,10 @@
       "MTRDXD14308": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS12222": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRDXD14308": {
@@ -209,6 +289,10 @@
       "MTRDXD14316": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRKRK1K230": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRDXD14316": {
@@ -237,20 +321,32 @@
         "source": "TAGO timetable"
       },
       "MTRDXD14319": {
-        "minutes": 4,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRDXD14319": {
       "MTRDXD14318": {
         "minutes": 3,
-        "source": "TAGO timetable"
+        "source": "catalog fallback"
+      },
+      "MTRDXD1D04": {
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRDXD1D04": {
+      "MTRDXD14319": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
       "MTRDXD1D13": {
         "minutes": 1,
         "source": "TAGO timetable"
+      },
+      "MTRS13327": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRDXD1D13": {
@@ -412,13 +508,13 @@
       },
       "MTREVE1Y124": {
         "minutes": 3,
-        "source": "TAGO timetable"
+        "source": "catalog fallback"
       }
     },
     "MTREVE1Y124": {
       "MTREVE1Y123": {
         "minutes": 3,
-        "source": "TAGO timetable"
+        "source": "catalog fallback"
       }
     },
     "MTRGMG1G100": {
@@ -503,14 +599,18 @@
         "source": "TAGO timetable"
       },
       "MTRGMG1G109": {
-        "minutes": 6,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRGMG1G109": {
       "MTRGMG1G108": {
-        "minutes": 6,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRARA1A05": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRGU82805": {
@@ -555,14 +655,14 @@
         "source": "TAGO timetable"
       },
       "MTRS182809": {
-        "minutes": 4,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS182809": {
       "MTRNU82806": {
-        "minutes": 4,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRS182811": {
         "minutes": 4,
@@ -627,6 +727,10 @@
       "MTRS182817": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS99933": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS182817": {
@@ -647,6 +751,10 @@
       "MTRS182819": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS13340": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS182819": {
@@ -725,36 +833,40 @@
         "source": "TAGO timetable"
       },
       "MTRS182827": {
-        "minutes": 5,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS182827": {
       "MTRS182826": {
-        "minutes": 2,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRS182828": {
-        "minutes": 4,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRKRK1K225": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS182828": {
       "MTRS182827": {
-        "minutes": 4,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRGXAX101": {
       "MTRGXAX102": {
-        "minutes": 4,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRGXAX102": {
       "MTRGXAX101": {
-        "minutes": 4,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRGXAX103": {
         "minutes": 3,
@@ -779,18 +891,46 @@
       "MTRGXAX106": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS13311": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRS162615": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRGXAX106": {
       "MTRGXAX105": {
         "minutes": 6,
         "source": "TAGO timetable"
+      },
+      "MTRGXAX108": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRARA1A01": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRGXAX108": {
+      "MTRGXAX106": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
       "MTRGXAX109": {
         "minutes": 7,
         "source": "TAGO timetable"
+      },
+      "MTRS13339": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRKRK1K221": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRGXAX109": {
@@ -807,6 +947,68 @@
       "MTRGXAX109": {
         "minutes": 10,
         "source": "TAGO timetable"
+      },
+      "MTRSRAX111": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      }
+    },
+    "MTRSRAX111": {
+      "MTRGXAX110": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      }
+    },
+    "MTRIAM10101": {
+      "MTRIAM10102": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      }
+    },
+    "MTRIAM10102": {
+      "MTRIAM10101": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRIAM10103": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      }
+    },
+    "MTRIAM10103": {
+      "MTRIAM10102": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRIAM10104": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      }
+    },
+    "MTRIAM10104": {
+      "MTRIAM10103": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRIAM10105": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      }
+    },
+    "MTRIAM10105": {
+      "MTRIAM10104": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRIAM10106": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      }
+    },
+    "MTRIAM10106": {
+      "MTRIAM10105": {
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRIC7751": {
@@ -901,17 +1103,25 @@
         "source": "TAGO timetable"
       },
       "MTRIC7761": {
-        "minutes": 5,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRIC7761": {
       "MTRIC7760": {
-        "minutes": 4,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRS172711": {
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS172711": {
+      "MTRIC7761": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
       "MTRS172712": {
         "minutes": 5,
         "source": "TAGO timetable"
@@ -925,6 +1135,10 @@
       "MTRS172713": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKR1113": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS172713": {
@@ -995,6 +1209,10 @@
       "MTRS172720": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS162646": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS172720": {
@@ -1095,6 +1313,10 @@
       "MTRS172730": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS12212": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS172730": {
@@ -1125,6 +1347,10 @@
       "MTRS172733": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRKRK1K213": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS172733": {
@@ -1145,6 +1371,10 @@
       "MTRS172735": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRDXD14305": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS172735": {
@@ -1165,6 +1395,14 @@
       "MTRS172737": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS13329": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRS990923": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS172737": {
@@ -1285,6 +1523,10 @@
       "MTRS172749": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKR1P142": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS172749": {
@@ -1357,6 +1599,10 @@
       "MTRICI1111": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRARA1A06": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRICI1111": {
@@ -1457,6 +1703,10 @@
       "MTRICI1121": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRKR1152": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRICI1121": {
@@ -1557,6 +1807,10 @@
       "MTRICI1131": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRKRK1K265": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRICI1131": {
@@ -1635,14 +1889,14 @@
         "source": "TAGO timetable"
       },
       "MTRICI1139": {
-        "minutes": 7,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRICI1139": {
       "MTRICI1138": {
-        "minutes": 2,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRICI2201": {
@@ -1709,6 +1963,10 @@
       "MTRICI2208": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRARA1A07": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRICI2208": {
@@ -1819,6 +2077,10 @@
       "MTRICI2219": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKR1156": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRICI2219": {
@@ -1919,14 +2181,18 @@
         "source": "TAGO timetable"
       },
       "MTRKR1100-2": {
-        "minutes": 4,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKR1100-2": {
       "MTRKR1100-1": {
         "minutes": 5,
         "source": "TAGO timetable"
+      },
+      "MTRKR1100-3": {
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKR1100-3": {
@@ -2047,6 +2313,10 @@
       "MTRKR1112": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRULU10111": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1112": {
@@ -2067,6 +2337,10 @@
       "MTRKR1114": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS172712": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1114": {
@@ -2127,6 +2401,10 @@
       "MTRKR1120": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKRK2119": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1120": {
@@ -2137,6 +2415,10 @@
       "MTRKR1121": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS162645": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1121": {
@@ -2167,6 +2449,14 @@
       "MTRKR1134": {
         "minutes": 5,
         "source": "TAGO timetable"
+      },
+      "MTRKRK2K118": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRKRK4K118": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1134": {
@@ -2187,6 +2477,10 @@
       "MTRKR1136": {
         "minutes": 4,
         "source": "TAGO timetable"
+      },
+      "MTRKRK4K110": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1136": {
@@ -2197,6 +2491,10 @@
       "MTRKR1137": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS99917": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1137": {
@@ -2207,6 +2505,10 @@
       "MTRKR1138": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRSLL1S402": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1138": {
@@ -2217,6 +2519,10 @@
       "MTRKR1139": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS152526": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1139": {
@@ -2237,6 +2543,10 @@
       "MTRKR1141": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS12234": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1141": {
@@ -2357,6 +2667,10 @@
       "MTRKR1153": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRICI1120": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1153": {
@@ -2397,6 +2711,10 @@
       "MTRKR1157": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRICI2218": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1157": {
@@ -2435,28 +2753,36 @@
         "source": "TAGO timetable"
       },
       "MTRKR1161": {
-        "minutes": 11,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKR1161": {
       "MTRKR1160": {
-        "minutes": 4,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRKR1P142": {
-        "minutes": 6,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRKRK1K272": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1P142": {
       "MTRKR1161": {
-        "minutes": 10,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRKR1P143": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS172748": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1P143": {
@@ -2473,15 +2799,27 @@
       "MTRKR1P143": {
         "minutes": 11,
         "source": "TAGO timetable"
+      },
+      "MTRKR1P144-1": {
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKR1P144-1": {
       "MTRKR1P144": {
-        "minutes": 6,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRKR1P145": {
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKR1P145": {
+      "MTRKR1P144-1": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
       "MTRKR1P146": {
         "minutes": 3,
         "source": "TAGO timetable"
@@ -2525,6 +2863,10 @@
       "MTRKR1P150": {
         "minutes": 4,
         "source": "TAGO timetable"
+      },
+      "MTRKR4443": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1P150": {
@@ -2585,6 +2927,10 @@
       "MTRKR1P156": {
         "minutes": 4,
         "source": "TAGO timetable"
+      },
+      "MTRKRK1K245": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR1P156": {
@@ -2603,24 +2949,24 @@
         "source": "TAGO timetable"
       },
       "MTRKR1P157-1": {
-        "minutes": 8,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKR1P157-1": {
       "MTRKR1P157": {
-        "minutes": 7,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRKR1P158": {
-        "minutes": 12,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKR1P158": {
       "MTRKR1P157-1": {
-        "minutes": 7,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRKR1P159": {
         "minutes": 3,
@@ -2793,28 +3139,32 @@
         "source": "TAGO timetable"
       },
       "MTRKR1P177": {
-        "minutes": 14,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKR1P177": {
       "MTRKR1P176": {
-        "minutes": 5,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRS11150": {
-        "minutes": 7,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS11150": {
       "MTRKR1P177": {
-        "minutes": 11,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRS11151": {
         "minutes": 7,
         "source": "TAGO timetable"
+      },
+      "MTRARA1A01": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS11151": {
@@ -2825,6 +3175,10 @@
       "MTRS11152": {
         "minutes": 7,
         "source": "TAGO timetable"
+      },
+      "MTRS12201": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS11152": {
@@ -2845,6 +3199,10 @@
       "MTRS11154": {
         "minutes": 8,
         "source": "TAGO timetable"
+      },
+      "MTRS13319": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS11154": {
@@ -2865,6 +3223,10 @@
       "MTRS11156": {
         "minutes": 6,
         "source": "TAGO timetable"
+      },
+      "MTRS14421": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS11156": {
@@ -2875,6 +3237,14 @@
       "MTRS11157": {
         "minutes": 8,
         "source": "TAGO timetable"
+      },
+      "MTRS12246": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRUIUIS122": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS11157": {
@@ -2901,6 +3271,10 @@
       "MTRS11158": {
         "minutes": 6,
         "source": "TAGO timetable"
+      },
+      "MTRS162637": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR3309": {
@@ -2993,9 +3367,17 @@
       "MTRKR3317": {
         "minutes": 6,
         "source": "TAGO timetable"
+      },
+      "MTRS13309": {
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS13309": {
+      "MTRKR3318": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
       "MTRS13310": {
         "minutes": 4,
         "source": "TAGO timetable"
@@ -3019,6 +3401,10 @@
       "MTRS13312": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRGXAX105": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS13312": {
@@ -3029,6 +3415,10 @@
       "MTRS13313": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS162613": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS13313": {
@@ -3099,6 +3489,10 @@
       "MTRS13320": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS11153": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS13320": {
@@ -3109,6 +3503,10 @@
       "MTRS13321": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS12203": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS13321": {
@@ -3119,6 +3517,10 @@
       "MTRS13322": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS14423": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS13322": {
@@ -3139,6 +3541,10 @@
       "MTRS13324": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS162634": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS13324": {
@@ -3159,6 +3565,10 @@
       "MTRS13326": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKRK4K114": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS13326": {
@@ -3179,6 +3589,10 @@
       "MTRS13328": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRDXD1D04": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS13328": {
@@ -3199,6 +3613,10 @@
       "MTRS13330": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS172736": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS13330": {
@@ -3249,6 +3667,10 @@
       "MTRS13335": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRKRK1K217": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS13335": {
@@ -3299,6 +3721,10 @@
       "MTRS13340": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRGXAX108": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS13340": {
@@ -3309,6 +3735,10 @@
       "MTRS13341": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS182818": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS13341": {
@@ -3317,14 +3747,18 @@
         "source": "TAGO timetable"
       },
       "MTRS13342": {
-        "minutes": 8,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS13342": {
       "MTRS13341": {
-        "minutes": 2,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRS152558": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR4435": {
@@ -3411,6 +3845,10 @@
       "MTRKR4444": {
         "minutes": 5,
         "source": "TAGO timetable"
+      },
+      "MTRKR1P149": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR4444": {
@@ -3501,6 +3939,14 @@
       "MTRKR4453": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKRK1K254": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRSWWSS26": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKR4453": {
@@ -3529,17 +3975,25 @@
         "source": "TAGO timetable"
       },
       "MTRKR4456": {
-        "minutes": 7,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKR4456": {
       "MTRKR4455": {
         "minutes": 3,
-        "source": "TAGO timetable"
+        "source": "catalog fallback"
+      },
+      "MTRNU4405": {
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRNU4405": {
+      "MTRKR4456": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
       "MTRNU4406": {
         "minutes": 3,
         "source": "TAGO timetable"
@@ -3693,6 +4147,10 @@
       "MTRS14422": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS11155": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS14422": {
@@ -3703,6 +4161,14 @@
       "MTRS14423": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS12205": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRS152537": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS14423": {
@@ -3713,6 +4179,10 @@
       "MTRS14424": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS13321": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS14424": {
@@ -3743,6 +4213,10 @@
       "MTRS14427": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRARA1A01": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS14427": {
@@ -3813,6 +4287,10 @@
       "MTRS14434": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS12226": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS14434": {
@@ -3825,6 +4303,14 @@
       "MTRKRK1K210": {
         "minutes": 7,
         "source": "TAGO timetable"
+      },
+      "MTRKRK2K117": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRKRK4K209": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK1K210": {
@@ -3835,6 +4321,18 @@
       "MTRKRK1K211": {
         "minutes": 4,
         "source": "TAGO timetable"
+      },
+      "MTRKRK4K210": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRS12208": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRS152541": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK1K211": {
@@ -3865,6 +4363,10 @@
       "MTRKRK1K214": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS172732": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK1K214": {
@@ -3875,6 +4377,10 @@
       "MTRKRK1K215": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS99927": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK1K215": {
@@ -3885,6 +4391,10 @@
       "MTRKRK1K216": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS12220": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK1K216": {
@@ -3905,6 +4415,10 @@
       "MTRKRK1K218": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS13334": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK1K218": {
@@ -3945,6 +4459,10 @@
       "MTRKRK1K222": {
         "minutes": 4,
         "source": "TAGO timetable"
+      },
+      "MTRGXAX108": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK1K222": {
@@ -3985,6 +4503,10 @@
       "MTRKRK1K226": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS182827": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK1K226": {
@@ -4035,6 +4557,10 @@
       "MTRKRK1K231": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRDXD14312": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK1K231": {
@@ -4185,6 +4711,10 @@
       "MTRKRK1K246": {
         "minutes": 4,
         "source": "TAGO timetable"
+      },
+      "MTRKR1P155": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK1K246": {
@@ -4275,6 +4805,10 @@
       "MTRKRK1K255": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKR4452": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK1K255": {
@@ -4385,6 +4919,10 @@
       "MTRKRK1K266": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRICI1130": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK1K266": {
@@ -4433,20 +4971,42 @@
         "source": "TAGO timetable"
       },
       "MTRKRK1K272": {
-        "minutes": 12,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKRK1K272": {
       "MTRKRK1K271": {
-        "minutes": 2,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRKR1161": {
+        "minutes": 5,
+        "source": "transfer"
+      }
+    },
+    "MTRKRK2119": {
+      "MTRKRK2K117": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRKR1119": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK2K117": {
+      "MTRKRK2119": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
       "MTRKRK2K118": {
         "minutes": 4,
         "source": "TAGO timetable"
+      },
+      "MTRKRK1K209": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK2K118": {
@@ -4457,6 +5017,10 @@
       "MTRKRK2K119": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKR1123": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK2K119": {
@@ -4477,6 +5041,10 @@
       "MTRKRK2K121": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKRK4K120": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK2K121": {
@@ -4487,6 +5055,10 @@
       "MTRKRK2P122": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKRK4K121": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK2P122": {
@@ -4665,20 +5237,24 @@
         "source": "TAGO timetable"
       },
       "MTRKRK2P140": {
-        "minutes": 14,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKRK2P140": {
       "MTRKRK2P139": {
-        "minutes": 4,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKRK4K110": {
       "MTRKRK4K111": {
         "minutes": 4,
         "source": "TAGO timetable"
+      },
+      "MTRKR1135": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK4K111": {
@@ -4719,6 +5295,10 @@
       "MTRKRK4K115": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS13325": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK4K115": {
@@ -4739,6 +5319,10 @@
       "MTRKRK4K119": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKR1123": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK4K119": {
@@ -4759,6 +5343,10 @@
       "MTRKRK4K121": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRKRK2K120": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK4K121": {
@@ -4769,6 +5357,10 @@
       "MTRKRK4K122": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKRK2K121": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK4K122": {
@@ -4923,32 +5515,36 @@
     },
     "MTRKRK4K137": {
       "MTRKRK4K136": {
-        "minutes": 5,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRKRK4K138": {
-        "minutes": 11,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKRK4K138": {
       "MTRKRK4K137": {
-        "minutes": 5,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRKRK4K209": {
-        "minutes": 4,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKRK4K209": {
       "MTRKRK4K138": {
-        "minutes": 7,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRKRK4K210": {
         "minutes": 10,
         "source": "TAGO timetable"
+      },
+      "MTRKRK1K209": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK4K210": {
@@ -4959,6 +5555,10 @@
       "MTRKRK4K311": {
         "minutes": 8,
         "source": "TAGO timetable"
+      },
+      "MTRKRK1K210": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK4K311": {
@@ -4979,6 +5579,10 @@
       "MTRKRK4K313": {
         "minutes": 11,
         "source": "TAGO timetable"
+      },
+      "MTRARA1A02": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK4K313": {
@@ -4999,6 +5603,10 @@
       "MTRKRK4K315": {
         "minutes": 12,
         "source": "TAGO timetable"
+      },
+      "MTRARA1A03": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK4K315": {
@@ -5019,6 +5627,10 @@
       "MTRKRK4K317": {
         "minutes": 12,
         "source": "TAGO timetable"
+      },
+      "MTRARA1A04": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK4K317": {
@@ -5197,26 +5809,62 @@
         "source": "TAGO timetable"
       },
       "MTRKRK4K336": {
-        "minutes": 7,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
+      }
+    },
+    "MTRKRK4K336": {
+      "MTRKRK4K335": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRKRK4K337": {
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKRK4K337": {
       "MTRKRK4K336": {
         "minutes": 5,
         "source": "TAGO timetable"
+      },
+      "MTRKRK4K338": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      }
+    },
+    "MTRKRK4K338": {
+      "MTRKRK4K337": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRKRK4P313": {
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKRK4P313": {
+      "MTRKRK4K338": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
       "MTRKRK4P314": {
-        "minutes": 6,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRARA1A01": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK4P314": {
       "MTRKRK4P313": {
-        "minutes": 11,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRS12240": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK5K409": {
@@ -5321,14 +5969,14 @@
         "source": "TAGO timetable"
       },
       "MTRKRK5K420": {
-        "minutes": 14,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKRK5K420": {
       "MTRKRK5K419": {
-        "minutes": 5,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKRWSS07": {
@@ -5411,9 +6059,17 @@
       "MTRKRWSS14": {
         "minutes": 10,
         "source": "TAGO timetable"
+      },
+      "MTRSWWSS16": {
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRSWWSS16": {
+      "MTRKRWSS15": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
       "MTRSWWSS17": {
         "minutes": 4,
         "source": "TAGO timetable"
@@ -5507,6 +6163,10 @@
       "MTRSWWSS27": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKR4452": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRSWWSS27": {
@@ -5515,20 +6175,24 @@
         "source": "TAGO timetable"
       },
       "MTRSWWSS28": {
-        "minutes": 10,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRSWWSS28": {
       "MTRSWWSS27": {
         "minutes": 3,
-        "source": "TAGO timetable"
+        "source": "catalog fallback"
       }
     },
     "MTRS12201": {
       "MTRS12202": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS11151": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12202": {
@@ -5549,6 +6213,10 @@
       "MTRS12204": {
         "minutes": 4,
         "source": "TAGO timetable"
+      },
+      "MTRS13320": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12204": {
@@ -5559,6 +6227,10 @@
       "MTRS12205": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS152536": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12205": {
@@ -5569,6 +6241,10 @@
       "MTRS12206": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS14422": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12206": {
@@ -5599,6 +6275,10 @@
       "MTRS12209": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKRK1K210": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12209": {
@@ -5639,6 +6319,10 @@
       "MTRS12213": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS172729": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12213": {
@@ -5699,6 +6383,10 @@
       "MTRS12219": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS99930": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12219": {
@@ -5719,6 +6407,10 @@
       "MTRS12221": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRKRK1K215": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12221": {
@@ -5739,6 +6431,10 @@
       "MTRS12223": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRDXD14307": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12223": {
@@ -5779,6 +6475,10 @@
       "MTRS12227": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS14433": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12227": {
@@ -5859,6 +6559,10 @@
       "MTRS12234-4": {
         "minutes": 9,
         "source": "TAGO timetable"
+      },
+      "MTRKR1140": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12234-4": {
@@ -5869,6 +6573,10 @@
       "MTRS12235": {
         "minutes": 8,
         "source": "TAGO timetable"
+      },
+      "MTRS152519": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12235": {
@@ -5889,6 +6597,10 @@
       "MTRS12237": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS152524": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12237": {
@@ -5909,6 +6621,10 @@
       "MTRS12239": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRS162623": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12239": {
@@ -5919,6 +6635,10 @@
       "MTRS12240": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRARA1A03": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12240": {
@@ -5929,6 +6649,10 @@
       "MTRS12241": {
         "minutes": 4,
         "source": "TAGO timetable"
+      },
+      "MTRKRK4P314": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12241": {
@@ -5957,14 +6681,14 @@
         "source": "TAGO timetable"
       },
       "MTRS12244": {
-        "minutes": 5,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS12244": {
       "MTRS12243": {
         "minutes": 3,
-        "source": "TAGO timetable"
+        "source": "catalog fallback"
       },
       "MTRS12245": {
         "minutes": 2,
@@ -5977,17 +6701,29 @@
         "source": "TAGO timetable"
       },
       "MTRS12246": {
-        "minutes": 6,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS12246": {
       "MTRS12245": {
-        "minutes": 4,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRS12247": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRS11156": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS12247": {
+      "MTRS12246": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
       "MTRS12248": {
         "minutes": 7,
         "source": "TAGO timetable"
@@ -6007,6 +6743,16 @@
       "MTRS12248": {
         "minutes": 4,
         "source": "TAGO timetable"
+      },
+      "MTRS12250": {
+        "minutes": 3,
+        "source": "catalog fallback"
+      }
+    },
+    "MTRS12250": {
+      "MTRS12249": {
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS152511": {
@@ -6033,6 +6779,10 @@
       "MTRS152514": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRARA1A05": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS152514": {
@@ -6093,6 +6843,10 @@
       "MTRS152520": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS12234-4": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS152520": {
@@ -6143,6 +6897,10 @@
       "MTRS152525": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS12236": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS152525": {
@@ -6163,6 +6921,10 @@
       "MTRS152527": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRKR1138": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS152527": {
@@ -6173,6 +6935,10 @@
       "MTRS152528": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS990915": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS152528": {
@@ -6203,6 +6969,10 @@
       "MTRS152531": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRARA1A02": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS152531": {
@@ -6263,6 +7033,10 @@
       "MTRS152537": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS12204": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS152537": {
@@ -6273,6 +7047,10 @@
       "MTRS152538": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS14422": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS152538": {
@@ -6283,6 +7061,10 @@
       "MTRS152539": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS162635": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS152539": {
@@ -6313,6 +7095,10 @@
       "MTRS152542": {
         "minutes": 1,
         "source": "TAGO timetable"
+      },
+      "MTRKRK1K210": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS152542": {
@@ -6441,14 +7227,14 @@
         "source": "TAGO timetable"
       },
       "MTRS152555": {
-        "minutes": 1,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS152555": {
       "MTRS152554": {
-        "minutes": 11,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRS152556": {
         "minutes": 2,
@@ -6483,6 +7269,10 @@
       "MTRS152559": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS13342": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS152559": {
@@ -6501,24 +7291,24 @@
         "source": "TAGO timetable"
       },
       "MTRS152561": {
-        "minutes": 11,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS152561": {
       "MTRS152560": {
-        "minutes": 2,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRS152562": {
-        "minutes": 8,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS152562": {
       "MTRS152561": {
-        "minutes": 5,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       },
       "MTRS152563": {
         "minutes": 2,
@@ -6585,6 +7375,10 @@
       "MTRS162614": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS13312": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS162614": {
@@ -6605,6 +7399,10 @@
       "MTRS162616": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRGXAX105": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS162616": {
@@ -6645,6 +7443,10 @@
       "MTRS162620": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRARA1A04": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS162620": {
@@ -6685,6 +7487,10 @@
       "MTRS162624": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS12238": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS162624": {
@@ -6725,6 +7531,10 @@
       "MTRS162628": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRARA1A02": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS162628": {
@@ -6795,6 +7605,10 @@
       "MTRS162635": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS13323": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS162635": {
@@ -6805,6 +7619,10 @@
       "MTRS162636": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS152538": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS162636": {
@@ -6825,6 +7643,10 @@
       "MTRS162638": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS11159": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS162638": {
@@ -6845,6 +7667,10 @@
       "MTRS162640": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRUIUIS121": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS162640": {
@@ -6905,6 +7731,10 @@
       "MTRS162646": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRKR1120": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS162646": {
@@ -6915,6 +7745,10 @@
       "MTRS162647": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRS172719": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS162647": {
@@ -6933,30 +7767,34 @@
         "source": "TAGO timetable"
       },
       "MTRS162649": {
-        "minutes": 7,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS162649": {
       "MTRS162648": {
-        "minutes": 5,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS990901": {
       "MTRS990902": {
-        "minutes": 5,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRS990902": {
       "MTRS990901": {
         "minutes": 3,
-        "source": "TAGO timetable"
+        "source": "catalog fallback"
       },
       "MTRS990903": {
         "minutes": 9,
         "source": "TAGO timetable"
+      },
+      "MTRARA1A05": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS990903": {
@@ -6987,6 +7825,10 @@
       "MTRS990906": {
         "minutes": 8,
         "source": "TAGO timetable"
+      },
+      "MTRARA1A042": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS990906": {
@@ -7087,6 +7929,10 @@
       "MTRS990916": {
         "minutes": 9,
         "source": "TAGO timetable"
+      },
+      "MTRS152527": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS990916": {
@@ -7157,6 +8003,10 @@
       "MTRS990924": {
         "minutes": 9,
         "source": "TAGO timetable"
+      },
+      "MTRS172736": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS990924": {
@@ -7177,6 +8027,10 @@
       "MTRS99917": {
         "minutes": 6,
         "source": "TAGO timetable"
+      },
+      "MTRDXD14306": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS99917": {
@@ -7187,6 +8041,10 @@
       "MTRS99926": {
         "minutes": 6,
         "source": "TAGO timetable"
+      },
+      "MTRKR1136": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS99926": {
@@ -7207,6 +8065,10 @@
       "MTRS99928": {
         "minutes": 9,
         "source": "TAGO timetable"
+      },
+      "MTRKRK1K214": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS99928": {
@@ -7237,6 +8099,10 @@
       "MTRS99931": {
         "minutes": 8,
         "source": "TAGO timetable"
+      },
+      "MTRS12218": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS99931": {
@@ -7267,6 +8133,10 @@
       "MTRS99934": {
         "minutes": 9,
         "source": "TAGO timetable"
+      },
+      "MTRS182816": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRS99934": {
@@ -7329,6 +8199,10 @@
       "MTRSLL1S403": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRKR1137": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRSLL1S403": {
@@ -7529,14 +8403,22 @@
         "source": "TAGO timetable"
       },
       "MTRUIUIS122": {
-        "minutes": 2,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRS162639": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRUIUIS122": {
       "MTRUIUIS121": {
-        "minutes": 2,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
+      },
+      "MTRS11156": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRULU10110": {
@@ -7553,6 +8435,10 @@
       "MTRULU10112": {
         "minutes": 1,
         "source": "TAGO timetable"
+      },
+      "MTRKR1111": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRULU10112": {
@@ -7671,14 +8557,14 @@
         "source": "TAGO timetable"
       },
       "MTRULU10125": {
-        "minutes": 4,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRULU10125": {
       "MTRULU10124": {
-        "minutes": 1,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRBGB10101": {
@@ -7745,6 +8631,10 @@
       "MTRBGB10108": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRBS3317": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRBGB10108": {
@@ -8077,6 +8967,10 @@
       "MTRBS1120": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRBS2219": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRBS1120": {
@@ -8117,6 +9011,10 @@
       "MTRBS1124": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRBS3305": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRBS1124": {
@@ -8127,6 +9025,10 @@
       "MTRBS1125": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRKRK6K113": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRBS1125": {
@@ -8137,6 +9039,14 @@
       "MTRBS1126": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRBS4402": {
+        "minutes": 5,
+        "source": "transfer"
+      },
+      "MTRKRK6K114": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRBS1126": {
@@ -8349,6 +9259,10 @@
       "MTRBS2209": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRBS3301": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRBS2209": {
@@ -8459,6 +9373,10 @@
       "MTRBS2220": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRBS1119": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRBS2220": {
@@ -8701,6 +9619,10 @@
       "MTRBS3302": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRBS2208": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRBS3302": {
@@ -8741,6 +9663,10 @@
       "MTRBS3306": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRBS1123": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRBS3306": {
@@ -8781,6 +9707,10 @@
       "MTRBS3310": {
         "minutes": 5,
         "source": "TAGO timetable"
+      },
+      "MTRBS4401": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRBS3310": {
@@ -8857,12 +9787,20 @@
       "MTRBS3316": {
         "minutes": 5,
         "source": "TAGO timetable"
+      },
+      "MTRBGB10107": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRBS4401": {
       "MTRBS4402": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRBS3309": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRBS4402": {
@@ -8873,6 +9811,10 @@
       "MTRBS4403": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRBS1125": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRBS4403": {
@@ -9025,6 +9967,10 @@
       "MTRKRK6K114": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRBS1124": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK6K114": {
@@ -9035,6 +9981,10 @@
       "MTRKRK6K115": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRBS1125": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK6K115": {
@@ -9203,14 +10153,14 @@
         "source": "TAGO timetable"
       },
       "MTRKRK6K132": {
-        "minutes": 13,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKRK6K132": {
       "MTRKRK6K131": {
-        "minutes": 5,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRDG10115": {
@@ -9367,6 +10317,10 @@
       "MTRDG10132": {
         "minutes": 3,
         "source": "TAGO timetable"
+      },
+      "MTRDG20230": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRDG10132": {
@@ -9377,6 +10331,10 @@
       "MTRDG10133": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRKRK7K117": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRDG10133": {
@@ -9535,24 +10493,24 @@
         "source": "TAGO timetable"
       },
       "MTRDG10149": {
-        "minutes": 13,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRDG10149": {
       "MTRDG10148": {
         "minutes": 3,
-        "source": "TAGO timetable"
+        "source": "catalog fallback"
       },
       "MTRDG13140": {
-        "minutes": 7,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRDG13140": {
       "MTRDG10149": {
-        "minutes": 6,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRDG20216": {
@@ -9689,6 +10647,10 @@
       "MTRDG20230": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRDG30329": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRDG20230": {
@@ -9699,6 +10661,10 @@
       "MTRDG20231": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRDG10130": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRDG20231": {
@@ -9827,14 +10793,14 @@
         "source": "TAGO timetable"
       },
       "MTRDG20244": {
-        "minutes": 6,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRDG20244": {
       "MTRDG20243": {
-        "minutes": 2,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRDG30312": {
@@ -10011,6 +10977,10 @@
       "MTRDG30330": {
         "minutes": 2,
         "source": "TAGO timetable"
+      },
+      "MTRDG20229": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRDG30330": {
@@ -10119,14 +11089,14 @@
         "source": "TAGO timetable"
       },
       "MTRDG30341": {
-        "minutes": 6,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRDG30341": {
       "MTRDG30340": {
-        "minutes": 1,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKRK7K110": {
@@ -10183,6 +11153,10 @@
       "MTRKRK7K118": {
         "minutes": 6,
         "source": "TAGO timetable"
+      },
+      "MTRDG10132": {
+        "minutes": 5,
+        "source": "transfer"
       }
     },
     "MTRKRK7K118": {
@@ -10191,14 +11165,14 @@
         "source": "TAGO timetable"
       },
       "MTRKRK7K119": {
-        "minutes": 10,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRKRK7K119": {
       "MTRKRK7K118": {
-        "minutes": 12,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRDJ10001": {
@@ -10403,14 +11377,14 @@
         "source": "TAGO timetable"
       },
       "MTRDJ10022": {
-        "minutes": 8,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRDJ10022": {
       "MTRDJ10021": {
-        "minutes": 2,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRGJ1100": {
@@ -10595,14 +11569,14 @@
         "source": "TAGO timetable"
       },
       "MTRGJ1119": {
-        "minutes": 7,
-        "source": "TAGO timetable"
+        "minutes": 3,
+        "source": "catalog fallback"
       }
     },
     "MTRGJ1119": {
       "MTRGJ1118": {
         "minutes": 3,
-        "source": "TAGO timetable"
+        "source": "catalog fallback"
       }
     }
   }

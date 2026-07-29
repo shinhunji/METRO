@@ -8,7 +8,7 @@ The `.env` file is only for local use and is ignored by Git. Do not commit the T
 
 ## Static subway data
 
-The app loads `프로젝트/station_catalog.json` and `프로젝트/weighted_graph.json` immediately at startup. The catalog is indexed as `region -> line -> stations`; the weighted graph is a station ID adjacency list.
+The app loads `프로젝트/station_catalog.json` and `프로젝트/weighted_graph.json` immediately at startup. The catalog is indexed as `region -> line -> stations`; the weighted graph is a station ID adjacency list with TAGO timetable weights, safe fallback weights for unavailable timetable pairs, and 5-minute transfer edges.
 
 To refresh the static data from TAGO before a release, set `Seoul_Express_Train_key` locally and run:
 
@@ -17,4 +17,4 @@ $env:Seoul_Express_Train_key = "your-tago-key"
 node scripts/generate-subway-data.mjs
 ```
 
-Commit the two generated JSON files. The API key is used only during generation and is never written to either file.
+The generator validates representative Seoul, Busan, and Daegu transfer paths before writing the files. Commit the two generated JSON files. The API key is used only during generation and is never written to either file.
