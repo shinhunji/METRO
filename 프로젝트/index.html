@@ -40,18 +40,16 @@
       <section class="route-options glass-card" aria-label="경로 기준 선택">
         <div><p class="eyebrow">ROUTE PREFERENCE</p><h2>추천 경로</h2></div>
         <div class="segmented-control">
-          <label><input type="radio" name="preference" value="time" checked /><span><i class="fa-regular fa-clock"></i> 최단시간</span></label>
-          <label><input type="radio" name="preference" value="transfer" /><span><i class="fa-solid fa-right-left"></i> 최소환승</span></label>
-          <label><input type="radio" name="preference" value="distance" /><span><i class="fa-solid fa-route"></i> 최단거리</span></label>
+          <label><input type="radio" name="preference" value="time" checked /><span><i class="fa-regular fa-clock"></i> 실제 시간표 최단시간</span></label>
         </div>
       </section>
 
-      <section id="empty-state" class="empty-state glass-card"><div class="empty-map"><i class="fa-solid fa-map-location-dot"></i><span class="map-dot dot-a"></span><span class="map-dot dot-b"></span><span class="map-line"></span></div><h2>최적의 지하철 경로를 찾아보세요</h2><p>출발역과 도착역을 선택하면 실시간 운행 정보를 바탕으로 안내합니다.</p></section>
+        <section id="empty-state" class="empty-state glass-card"><div class="empty-map"><i class="fa-solid fa-map-location-dot"></i><span class="map-dot dot-a"></span><span class="map-dot dot-b"></span><span class="map-line"></span></div><h2>최적의 지하철 경로를 찾아보세요</h2><p>TAGO 실제 시간표로 만든 가중치 그래프를 이용해 이동시간을 계산합니다.</p></section>
 
       <section id="result-section" class="result-section hidden" aria-live="polite">
         <div class="result-top glass-card"><div><p class="eyebrow">OPTIMAL ROUTE</p><h2 id="result-title">경로 안내</h2></div><div class="result-actions"><button id="refresh-details" class="refresh-button" type="button"><i class="fa-solid fa-rotate-right"></i><span>정보 새로고침</span></button><button id="favorite-route" class="favorite-button" type="button"><i class="fa-regular fa-star"></i><span>즐겨찾기</span></button></div></div>
         <div id="metric-grid" class="metric-grid"></div>
-        <article class="route-card glass-card"><div class="route-card-head"><div><p class="eyebrow">YOUR JOURNEY</p><h2>최단 경로</h2></div><span id="route-badge" class="route-badge">계산 완료</span></div><div id="route-timeline" class="route-timeline"></div></article>
+        <article class="route-card glass-card"><div class="route-card-head"><div><p class="eyebrow">WEIGHTED TIMETABLE GRAPH</p><h2>최단 경로</h2></div><span id="route-badge" class="route-badge">계산 완료</span></div><div id="route-timeline" class="route-timeline"></div></article>
         <section id="station-details" class="station-details"></section>
         <section class="info-grid">
           <article class="detail-card glass-card"><div class="detail-title"><span class="detail-icon bus"><i class="fa-solid fa-bus-simple"></i></span><div><p class="eyebrow">BUS CONNECTION</p><h3>출발역 버스 연계</h3></div></div><div id="origin-buses" class="api-content loading-content">경로를 검색하면 출구별 버스노선을 불러옵니다.</div></article>
@@ -62,7 +60,7 @@
     </section>
   </main>
 
-  <section class="concept-section"><div class="concept-inner"><div class="concept-intro"><p class="eyebrow">DISCRETE MATHEMATICS IN ACTION</p><h2>사용된 이산수학 개념</h2><p>일상의 이동 문제를 논리와 구조로 풀었습니다.</p></div><div class="concept-grid"><article><span>01</span><i class="fa-solid fa-share-nodes"></i><h3>그래프 Graph</h3><p>역을 정점, 이동 구간을 가중치 간선으로 만든 뒤 Dijkstra 알고리즘으로 최적 경로를 탐색합니다.</p></article><article><span>02</span><i class="fa-solid fa-function"></i><h3>함수 Function</h3><p>이동·환승 시간, 요금, 도착 예정 시각을 순수 함수로 조합해 계산합니다.</p></article><article><span>03</span><i class="fa-solid fa-sitemap"></i><h3>트리 Tree</h3><p>대한민국 → 지역 → 노선 → 역의 계층 객체를 재귀적으로 화면에 표현합니다.</p></article><article><span>04</span><i class="fa-solid fa-circle-check"></i><h3>부울대수 Boolean</h3><p>입력 유효성, API 성공 여부, 운행 상태와 시설 필터를 true/false 논리로 제어합니다.</p></article></div></div>
+  <section class="concept-section"><div class="concept-inner"><div class="concept-intro"><p class="eyebrow">DISCRETE MATHEMATICS IN ACTION</p><h2>사용된 이산수학 개념</h2><p>일상의 이동 문제를 논리와 구조로 풀었습니다.</p></div><div class="concept-grid"><article><span>01</span><i class="fa-solid fa-share-nodes"></i><h3>가중치 그래프</h3><p>역은 정점, 인접 역은 간선으로 표현하고 TAGO 시간표에서 계산한 실제 이동시간을 간선 가중치로 저장합니다.</p></article><article><span>02</span><i class="fa-solid fa-route"></i><h3>Dijkstra 알고리즘</h3><p>모든 간선의 이동시간을 누적해 출발역부터 도착역까지 총 시간이 가장 짧은 경로를 찾습니다.</p></article><article><span>03</span><i class="fa-solid fa-clock"></i><h3>도착 예정 시간</h3><p>출발 시간에 경로의 가중치를 순서대로 더해 각 역과 최종 도착역의 예상 시각을 계산합니다.</p></article><article><span>04</span><i class="fa-solid fa-rotate-right"></i><h3>그래프 갱신</h3><p>처음 생성한 시간표 그래프는 저장해 재사용하고, 새로고침하면 TAGO 시간표를 다시 분석합니다.</p></article></div></div>
   </section>
 
   <div id="toast" class="toast" role="status"></div>

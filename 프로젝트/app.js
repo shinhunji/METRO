@@ -1,7 +1,11 @@
 "use strict";
 
-// Vercel keeps the TAGO key in TAGO_SERVICE_KEY and proxies browser requests.
+// Vercel keeps the TAGO key server-side and proxies browser requests.
 const API_BASE = "/api/tago";
+const GRAPH_FILE = "subway_graph.json";
+const GRAPH_CACHE_KEY = "metro-subway-graph-v1";
+const DEFAULT_TRAVEL_MINUTES = 3;
+const TRANSFER_MINUTES = 5;
 const LINE_COLORS = {
   "수도권": { "1호선":"#0052A4", "2호선":"#00A84D", "3호선":"#EF7C1C", "4호선":"#00A5DE", "5호선":"#996CAC", "6호선":"#CD7C2F", "7호선":"#747F00", "8호선":"#E6186C", "9호선":"#BDB092", "GTX-A":"#9A6292", "경강":"#003DA5", "경의중앙":"#77C4A3", "경춘":"#0C8E72", "공항":"#0090D2", "김포골드라인":"#A17800", "서해선":"#8FC31F", "수인분당":"#F5A200", "신림선":"#6789CA", "신분당":"#D4003B", "에버라인":"#6FB245", "우이신설":"#B7C452", "의정부":"#FDA600", "인천1호선":"#6496D8", "인천2호선":"#ED8B00", "자기부상":"#FFCD12" },
   "부산": { "1호선":"#F06A00", "2호선":"#81BF48", "3호선":"#BB8C00", "4호선":"#217DCB", "동해":"#0054A6", "부산김해경전철":"#8652A1" },
@@ -23,6 +27,8 @@ let NETWORK_TREE = {};
 
 const els = {};
 let graph = new Map();
+let subwayGraph = { version: 1, generatedAt: null, stationGraph: {} };
+let graphBuildPromise = null;
 let allStations = []; let currentRoute = null; let facilityStation = "origin"; let selectedRegion = ""; let extrasRequestInFlight = false; let extrasRefreshTimer = null; let stationById = new Map();
 const selections = { origin: { line: "" }, destination: { line: "" } };
 const selectedStationRecords = { origin: null, destination: null };
@@ -39,8 +45,9 @@ function buildGraph() {
   stationById = new Map();
   const connect = (from, to, line) => {
     if (!graph.has(from)) graph.set(from, []); if (!graph.has(to)) graph.set(to, []);
-    graph.get(from).push({ to, line, distance: 1 });
-    graph.get(to).push({ to: from, line, distance: 1 });
+    const weight = graphWeight(from, to, DEFAULT_TRAVEL_MINUTES);
+    graph.get(from).push({ to, line, weight });
+    graph.get(to).push({ to: from, line, weight });
   };
   Object.values(NETWORK_TREE).forEach(region => Object.entries(region).forEach(([line, stations]) => {
     stations.forEach(station => { stationById.set(station.id, station); if (!graph.has(station.id)) graph.set(station.id, []); });
@@ -57,8 +64,8 @@ function buildGraph() {
       for (let index = 1; index < stations.length; index += 1) {
         // A physical transfer is a short, but non-zero, edge between explicitly listed station IDs.
         const from = stations[0]; const to = stations[index];
-        graph.get(from.id).push({ to: to.id, line: to.line, distance: 0, transfer: true });
-        graph.get(to.id).push({ to: from.id, line: from.line, distance: 0, transfer: true });
+        graph.get(from.id).push({ to: to.id, line: to.line, weight: TRANSFER_MINUTES, transfer: true });
+        graph.get(to.id).push({ to: from.id, line: from.line, weight: TRANSFER_MINUTES, transfer: true });
       }
     });
   });
@@ -100,25 +107,25 @@ async function loadStationCatalog() {
   selectedRegion = Object.keys(NETWORK_TREE)[0];
   els.region.innerHTML = Object.keys(NETWORK_TREE).map(region => `<option value="${escapeHTML(region)}">${escapeHTML(region)}</option>`).join(""); els.region.value = selectedRegion;
   Object.keys(selections).forEach(role => { selections[role].line = Object.keys(NETWORK_TREE[selectedRegion])[0]; });
-  buildGraph(); renderTree("origin"); renderTree("destination");
+  await loadGraphSnapshot(); buildGraph(); renderTree("origin"); renderTree("destination");
+  buildRegionGraph(selectedRegion);
 }
 
-// Dijkstra finds the least-cost path. Cost differs for time, distance, or transfers.
-function dijkstra(start, end, preference) {
+// Dijkstra minimizes timetable-derived minutes stored on weighted graph edges.
+function dijkstra(start, end) {
   const queue = [{ station: start, cost: 0, line: null, transfers: 0, path: [] }];
   const best = new Map([[`${start}|`, 0]]);
   while (queue.length) {
     queue.sort((a, b) => a.cost - b.cost);
     const state = queue.shift();
-    if (state.station === end) return [...state.path, { id: end, line: state.line }];
+    if (state.station === end) return { path: [...state.path, { id: end, line: state.line, minutes: 0 }], totalMinutes: state.cost };
     for (const edge of graph.get(state.station) || []) {
-      const isTransfer = Boolean(state.line && state.line !== edge.line);
-        const weight = preference === "transfer" ? (isTransfer ? 12 : 1) : edge.distance;
-      const nextCost = state.cost + weight;
+      const isTransfer = Boolean(edge.transfer || (state.line && state.line !== edge.line));
+      const nextCost = state.cost + edge.weight;
       const key = `${edge.to}|${edge.line}`;
       if (nextCost < (best.get(key) ?? Infinity)) {
         best.set(key, nextCost);
-        queue.push({ station: edge.to, cost: nextCost, line: edge.line, transfers: state.transfers + Number(isTransfer), path: [...state.path, { id: state.station, line: edge.line, transfer: Boolean(edge.transfer) }] });
+        queue.push({ station: edge.to, cost: nextCost, line: edge.line, transfers: state.transfers + Number(isTransfer), path: [...state.path, { id: state.station, line: edge.line, transfer: Boolean(edge.transfer), minutes: edge.weight }] });
       }
     }
   }
@@ -127,8 +134,6 @@ function dijkstra(start, end, preference) {
 
 // Function group: each calculation has a deterministic input/output relationship.
 const calculateTransfers = path => path.slice(1).reduce((count, stop, index) => count + Number(stop.line !== path[index].line), 0);
-const calculateFare = (stops, baseFare, extraFare) => baseFare + (stops <= 10 ? 0 : Math.ceil((stops - 10) / 5) * extraFare);
-const calculateFares = stops => ({ adult: calculateFare(stops, 1400, 100), youth: calculateFare(stops, 800, 80), child: calculateFare(stops, 500, 50) });
 const formatTime = date => date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
 
 async function fetchTago(endpoint, params = {}) {
@@ -157,6 +162,82 @@ function readCache(key) {
 function writeCache(key, value, ttl) {
   if (value === null) return;
   try { localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({ value, expiresAt: Date.now() + ttl })); } catch (error) { console.warn("TAGO cache could not be saved:", error); }
+}
+function graphWeight(from, to, fallback) { return Number(subwayGraph.stationGraph?.[from]?.[to]?.minutes) || fallback; }
+function median(values) {
+  const ordered = values.filter(value => value > 0 && value <= 15).sort((a, b) => a - b);
+  if (!ordered.length) return null;
+  const middle = Math.floor(ordered.length / 2);
+  return Math.round(ordered.length % 2 ? ordered[middle] : (ordered[middle - 1] + ordered[middle]) / 2);
+}
+function timetableSeconds(value) {
+  if (!/^\d{6}$/.test(String(value))) return null;
+  return Number(value.slice(0, 2)) * 3600 + Number(value.slice(2, 4)) * 60 + Number(value.slice(4, 6));
+}
+function segmentMinutes(fromRows, toRows) {
+  const toByTerminal = new Map();
+  normaliseItems(toRows).forEach(row => {
+    const terminal = row.endSubwayStationId || row.endSubwayStationName || "";
+    const time = timetableSeconds(row.depTime);
+    if (time === null) return;
+    if (!toByTerminal.has(terminal)) toByTerminal.set(terminal, []);
+    toByTerminal.get(terminal).push(time);
+  });
+  toByTerminal.forEach(times => times.sort((a, b) => a - b));
+  const durations = [];
+  normaliseItems(fromRows).forEach(row => {
+    const start = timetableSeconds(row.depTime); const terminal = row.endSubwayStationId || row.endSubwayStationName || "";
+    if (start === null || !toByTerminal.has(terminal)) return;
+    const arrivals = toByTerminal.get(terminal);
+    let end = arrivals.find(time => time >= start);
+    if (end === undefined) end = arrivals[0] + 24 * 60 * 60;
+    const minutes = (end - start) / 60;
+    if (minutes >= 0.5 && minutes <= 15) durations.push(minutes);
+  });
+  return median(durations);
+}
+async function loadGraphSnapshot() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(GRAPH_CACHE_KEY) || "null");
+    if (cached?.stationGraph) subwayGraph = cached;
+    else {
+      const response = await fetch(GRAPH_FILE);
+      const fileGraph = response.ok ? await response.json() : null;
+      if (fileGraph?.stationGraph) subwayGraph = fileGraph;
+    }
+  } catch (error) { console.warn("Could not load subway graph", error); }
+}
+async function buildRegionGraph(region, forceRefresh = false) {
+  if (graphBuildPromise) return graphBuildPromise;
+  const stations = Object.values(NETWORK_TREE[region] || {}).flat();
+  const hasRegionGraph = stations.some(station => Object.keys(subwayGraph.stationGraph?.[station.id] || {}).length);
+  if (!stations.length || (!forceRefresh && hasRegionGraph)) return;
+  graphBuildPromise = (async () => {
+    const rowsByStation = new Map(); const dayType = currentDayType();
+    const jobs = [];
+    stations.forEach(station => ["U", "D"].forEach(direction => jobs.push(async () => {
+      const key = `timetable:${station.id}:${dayType}:${direction}`;
+      const rows = await getCachedTago(key, "GetSubwaySttnAcctoSchdulList", { subwayStationId: station.id, dailyTypeCode: dayType, upDownTypeCode: direction, numOfRows: "10000" }, TIMETABLE_CACHE_TTL, forceRefresh);
+      rowsByStation.set(`${station.id}:${direction}`, rows || []);
+    })));
+    const workers = Array.from({ length: 5 }, async () => { while (jobs.length) await jobs.shift()(); });
+    await Promise.all(workers);
+    const stationGraph = { ...(subwayGraph.stationGraph || {}) };
+    Object.values(NETWORK_TREE[region] || {}).forEach(line => line.forEach((station, index) => {
+      if (!line[index + 1]) return;
+      const next = line[index + 1];
+      ["U", "D"].forEach(direction => {
+        const minutes = segmentMinutes(rowsByStation.get(`${station.id}:${direction}`), rowsByStation.get(`${next.id}:${direction}`));
+        if (minutes) { (stationGraph[station.id] ||= {})[next.id] = { minutes, source: "TAGO timetable" }; }
+        const reverseMinutes = segmentMinutes(rowsByStation.get(`${next.id}:${direction}`), rowsByStation.get(`${station.id}:${direction}`));
+        if (reverseMinutes) { (stationGraph[next.id] ||= {})[station.id] = { minutes: reverseMinutes, source: "TAGO timetable" }; }
+      });
+    }));
+    subwayGraph = { version: 1, generatedAt: new Date().toISOString(), stationGraph };
+    localStorage.setItem(GRAPH_CACHE_KEY, JSON.stringify(subwayGraph));
+    buildGraph();
+  })().catch(error => console.warn("Could not build timetable graph", error)).finally(() => { graphBuildPromise = null; });
+  return graphBuildPromise;
 }
 async function getCachedTago(key, endpoint, params, ttl, forceRefresh = false) {
   const cached = readCache(key);
@@ -209,18 +290,26 @@ function showSuggestions(input) {
 function closeSuggestions() { document.querySelectorAll(".suggestions").forEach(item => item.classList.remove("show")); }
 function toast(message) { els.toast.textContent = message; els.toast.classList.add("show"); setTimeout(() => els.toast.classList.remove("show"), 2500); }
 
-function renderResult(path) {
+function routeTimes(path, departureSeconds) {
+  let time = departureSeconds;
+  return path.map((stop, index) => {
+    if (index) time += (path[index - 1].minutes || DEFAULT_TRAVEL_MINUTES) * 60;
+    return time;
+  });
+}
+function renderResult(result) {
+  const { path, totalMinutes } = result;
   const transfers = calculateTransfers(path); const stops = path.length;
-  const fares = calculateFares(stops);
-  currentRoute = { path, transfers, stops, origin: els.origin.value.trim(), destination: els.destination.value.trim() };
+  const now = new Date(); const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  currentRoute = { path, transfers, stops, totalMinutes, departureSeconds: nowSeconds, origin: els.origin.value.trim(), destination: els.destination.value.trim() };
   els.empty.classList.add("hidden"); els.results.classList.remove("hidden"); els.title.textContent = `${currentRoute.origin} → ${currentRoute.destination}`;
-  const fareBreakdown = `성인 ${fares.adult.toLocaleString()}원<br><small>청소년 ${fares.youth.toLocaleString()}원 · 어린이 ${fares.child.toLocaleString()}원</small>`;
-  els.metrics.innerHTML = [["fa-right-left","환승횟수",`${transfers}<small>회</small>`],["fa-train-subway","총 이동역",`${stops - 1}<small>개 역</small>`],["fa-clock","출발역 다음 열차",`<small>시간표를 확인하는 중</small>`],["fa-arrow-right-from-bracket","운행 방향",`<small>하행 (D)</small>`],["fa-won-sign","예상요금",fareBreakdown]].map(([icon,label,value]) => `<div class="metric glass-card"><i class="fa-solid ${icon}"></i><p class="metric-label">${label}</p><strong>${value}</strong></div>`).join("");
+  els.metrics.innerHTML = [["fa-right-left","환승횟수",`${transfers}<small>회</small>`],["fa-train-subway","총 이동역",`${stops - 1}<small>개 역</small>`],["fa-clock","현재 시간",formatScheduleTime(nowSeconds)],["fa-train-subway","출발 시간",formatScheduleTime(nowSeconds)],["fa-clock","총 이동시간",`${totalMinutes}<small>분</small>`],["fa-flag-checkered","최종 도착 예정",formatScheduleTime(nowSeconds + totalMinutes * 60)]].map(([icon,label,value]) => `<div class="metric glass-card"><i class="fa-solid ${icon}"></i><p class="metric-label">${label}</p><strong>${value}</strong></div>`).join("");
   const stationName = stop => stationById.get(stop.id)?.name || "역 정보 없음";
   const stopRegion = stop => stationById.get(stop.id)?.region || selectedRegion;
-  els.timeline.innerHTML = path.map((stop, i) => { const transfer = i > 0 && stop.line !== path[i - 1].line; return `<div class="timeline-stop ${transfer ? "transfer" : ""}" style="--route-color:${lineColor(stopRegion(stop), stop.line)}"><span class="stop-dot"></span><div class="stop-name">${stationNameMarkup(stationName(stop))}</div><div class="stop-line">${escapeHTML(stop.line)}</div>${transfer ? "<div class=\"transfer-note\">환승 +5분</div>" : ""}</div>`; }).join("");
-  els.stationDetails.innerHTML = [path[0], path.at(-1)].map((stop, i) => `<article class="station-card glass-card"><p class="eyebrow">${i ? "DESTINATION" : "ORIGIN"} STATION</p><h3>${stationNameMarkup(stationName(stop))}</h3><p class="station-line"><span class="line-color" style="background:${lineColor(stopRegion(stop), stop.line)}"></span> ${escapeHTML(stop.line)}</p><div class="station-info"><div>이전역<b>${i ? stationNameMarkup(stationName(path.at(-2))) : "출발역"}</b></div><div>다음역<b>${i ? "도착" : path[1] ? stationNameMarkup(stationName(path[1])) : "-"}</b></div><div>${i ? "시간표 안내" : "다음 열차"}<b>${i ? "출발역 기준 안내" : "시간표 확인 중"}</b></div><div>${i ? "운행 방향" : "조회 기준"}<b>${i ? "하행 (D)" : "출발역 하행 (D)"}</b></div></div></article>`).join("");
-  document.getElementById("route-badge").textContent = "시간표 확인 중";
+  const times = routeTimes(path, nowSeconds);
+  els.timeline.innerHTML = path.map((stop, i) => { const transfer = i > 0 && stop.line !== path[i - 1].line; const label = i ? "도착 예정" : "출발"; return `<div class="timeline-stop ${transfer ? "transfer" : ""}" style="--route-color:${lineColor(stopRegion(stop), stop.line)}"><span class="stop-dot"></span><div class="stop-name">${stationNameMarkup(stationName(stop))}</div><div class="stop-line">${escapeHTML(stop.line)} · ${label} ${formatScheduleTime(times[i])}</div>${transfer ? `<div class="transfer-note">환승 +${TRANSFER_MINUTES}분</div>` : ""}</div>`; }).join("");
+  els.stationDetails.innerHTML = [path[0], path.at(-1)].map((stop, i) => `<article class="station-card glass-card"><p class="eyebrow">${i ? "DESTINATION" : "ORIGIN"} STATION</p><h3>${stationNameMarkup(stationName(stop))}</h3><p class="station-line"><span class="line-color" style="background:${lineColor(stopRegion(stop), stop.line)}"></span> ${escapeHTML(stop.line)}</p><div class="station-info"><div>이전역<b>${i ? stationNameMarkup(stationName(path.at(-2))) : "출발역"}</b></div><div>다음역<b>${i ? "도착" : path[1] ? stationNameMarkup(stationName(path[1])) : "-"}</b></div><div>${i ? "도착 예정" : "출발 시간"}<b>${formatScheduleTime(times[i ? times.length - 1 : 0])}</b></div><div>이동시간<b>${totalMinutes}분</b></div></div></article>`).join("");
+  document.getElementById("route-badge").textContent = `도착 예정 ${formatScheduleTime(times.at(-1))}`;
   updateFavoriteButton(); startExtrasRefresh(); els.results.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -285,13 +374,11 @@ async function loadExtras(forceRefresh = false) {
   extrasRequestInFlight = true;
   const route = currentRoute; els.originBuses.textContent = "실제 버스 연계 정보를 불러오는 중..."; els.destinationBuses.textContent = "실제 버스 연계 정보를 불러오는 중..."; els.facilities.textContent = "실제 주변시설 정보를 불러오는 중...";
   try {
-    const [origin, destination, schedule] = await Promise.all([
+    const [origin, destination] = await Promise.all([
       getStationExtras(selectedStationRecords.origin, forceRefresh),
-      getStationExtras(selectedStationRecords.destination, forceRefresh),
-      loadOriginSchedule(route, forceRefresh)
+      getStationExtras(selectedStationRecords.destination, forceRefresh)
     ]);
     if (currentRoute !== route) return; route.extras = { origin, destination }; renderBuses(els.originBuses, origin.buses); renderBuses(els.destinationBuses, destination.buses); renderFacilities();
-    updateOriginSchedule(route, schedule);
   } finally { extrasRequestInFlight = false; }
 }
 function startExtrasRefresh() {
@@ -303,12 +390,12 @@ function startExtrasRefresh() {
 async function refreshDetails() {
   if (!currentRoute || extrasRequestInFlight) return;
   els.refresh.disabled = true;
-  try { await loadExtras(true); toast("최신 역 정보를 불러왔습니다."); }
+  try { await buildRegionGraph(selectedRegion, true); await loadExtras(true); toast("시간표 그래프와 역 정보를 새로고침했습니다."); }
   finally { els.refresh.disabled = false; }
 }
 function updateFavoriteButton() { const key = `${els.origin.value.trim()}|${els.destination.value.trim()}`; const active = favorites.some(item => item.key === key); els.favorite.classList.toggle("active", active); els.favorite.innerHTML = `<i class="fa-${active ? "solid" : "regular"} fa-star"></i><span>${active ? "저장됨" : "즐겨찾기"}</span>`; }
 function saveRecent(origin, destination) { recent = [origin, destination, ...recent.filter(value => value !== origin && value !== destination)].slice(0, 5); localStorage.setItem("metro-recent", JSON.stringify(recent)); renderRecents(); }
-function submitRoute(event) { event?.preventDefault(); const origin = els.origin.value.trim(); const destination = els.destination.value.trim(); const originRecord = selectedStationRecords.origin; const destinationRecord = selectedStationRecords.destination; const inputsValid = Boolean(origin && destination); const stationsSelected = Boolean(originRecord && destinationRecord); const differentStations = originRecord?.id !== destinationRecord?.id; if (!inputsValid) return toast("출발역과 도착역을 모두 선택해주세요."); if (!stationsSelected) return toast("자동완성 또는 노선·역 목록에서 실제 역을 선택해주세요."); if (!differentStations) return toast("서로 다른 역을 선택해주세요."); if (!graph.has(originRecord.id) || !graph.has(destinationRecord.id)) return toast("목록에서 제공하는 역을 선택해주세요."); const preference = document.querySelector("input[name=preference]:checked").value; const path = dijkstra(originRecord.id, destinationRecord.id, preference); if (!path) return toast("두 역 사이의 연결 경로를 찾지 못했습니다."); saveRecent(origin, destination); renderResult(path); }
+async function submitRoute(event) { event?.preventDefault(); const origin = els.origin.value.trim(); const destination = els.destination.value.trim(); const originRecord = selectedStationRecords.origin; const destinationRecord = selectedStationRecords.destination; const inputsValid = Boolean(origin && destination); const stationsSelected = Boolean(originRecord && destinationRecord); const differentStations = originRecord?.id !== destinationRecord?.id; if (!inputsValid) return toast("출발역과 도착역을 모두 선택해주세요."); if (!stationsSelected) return toast("자동완성 또는 노선·역 목록에서 실제 역을 선택해주세요."); if (!differentStations) return toast("서로 다른 역을 선택해주세요."); if (!graph.has(originRecord.id) || !graph.has(destinationRecord.id)) return toast("목록에서 제공하는 역을 선택해주세요."); toast("TAGO 시간표로 이동시간 그래프를 확인하는 중..."); await buildRegionGraph(selectedRegion); const result = dijkstra(originRecord.id, destinationRecord.id); if (!result) return toast("두 역 사이의 연결 경로를 찾지 못했습니다."); saveRecent(origin, destination); renderResult(result); }
 
 function bindEvents() {
   document.addEventListener("click", event => { const line = event.target.closest("[data-line]"); const station = event.target.closest("[data-station-id]"); const pick = event.target.closest("[data-pick-id]"); if (line) { const role = line.dataset.roleSelector; selections[role].line = line.dataset.line; renderTree(role); } else if (station || pick) { const button = station || pick; const role = button.dataset.roleSelector || button.dataset.target; const record = findStationRecord(button.dataset.stationId || button.dataset.pickId); if (record) { (role === "origin" ? els.origin : els.destination).value = record.name; selectedStationRecords[role] = record; toast(`${record.name}역을 ${role === "origin" ? "출발" : "도착"}역으로 선택했습니다.`); } closeSuggestions(); } const recentButton = event.target.closest("[data-recent]"); if (recentButton) { const input = !els.origin.value ? els.origin : els.destination; input.value = recentButton.dataset.recent; } });
