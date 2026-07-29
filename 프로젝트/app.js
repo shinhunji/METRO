@@ -28,11 +28,16 @@ let NETWORK_TREE = {};
 const els = {};
 let graph = new Map();
 let subwayGraph = { version: 1, generatedAt: null, stationGraph: {} };
-let allStations = []; let currentRoute = null; let facilityStation = "origin"; let selectedRegion = ""; let extrasRequestInFlight = false; let extrasRefreshTimer = null; let stationById = new Map(); let regionStations = []; let catalogReady = false; let routeCalculationInFlight = false; let staticDataError = "";
+let allStations = []; let currentRoute = null; let facilityStation = "origin"; let selectedRegion = ""; let extrasRequestInFlight = false; let stationById = new Map(); let regionStations = []; let catalogReady = false; let routeCalculationInFlight = false; let staticDataError = "";
 const selections = { origin: { line: "" }, destination: { line: "" } };
 const selectedStationRecords = { origin: null, destination: null };
 let favorites = JSON.parse(localStorage.getItem("metro-favorites") || "[]");
 let recent = JSON.parse(localStorage.getItem("metro-recent") || "[\"서울역\",\"강남\",\"부산역\"]");
+const detailCache = new Map();
+const DETAIL_CACHE_LIMIT = 8;
+const DETAIL_ROW_LIMIT = 30;
+const FACILITY_DISPLAY_LIMIT = 12;
+const BUS_ROUTES_PER_EXIT_LIMIT = 6;
 
 const $ = (selector) => document.querySelector(selector);
 function escapeHTML(value) { return String(value ?? "").replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[char])); }
@@ -190,7 +195,6 @@ async function fetchTago(endpoint, params = {}) {
 
 function currentDayType() { const day = new Date().getDay(); return day === 0 ? "03" : day === 6 ? "02" : "01"; }
 const CACHE_PREFIX = "metro-tago-v1:";
-const STATIC_CACHE_TTL = 30 * 24 * 60 * 60 * 1000;
 const TIMETABLE_CACHE_TTL = 60 * 60 * 1000;
 function readCache(key) {
   try {
@@ -201,6 +205,21 @@ function readCache(key) {
 function writeCache(key, value, ttl) {
   if (value === null) return;
   try { localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({ value, expiresAt: Date.now() + ttl })); } catch (error) { console.warn("TAGO cache could not be saved:", error); }
+}
+function clearLegacyDetailCache() {
+  try {
+    Object.keys(localStorage).filter(key => key.startsWith(CACHE_PREFIX + "bus:") || key.startsWith(CACHE_PREFIX + "facility:")).forEach(key => localStorage.removeItem(key));
+  } catch (error) { console.warn("Could not clear old detail cache:", error); }
+}
+function getDetailCache(key) {
+  const value = detailCache.get(key);
+  if (!value) return null;
+  detailCache.delete(key); detailCache.set(key, value);
+  return value;
+}
+function setDetailCache(key, value) {
+  detailCache.set(key, value);
+  if (detailCache.size > DETAIL_CACHE_LIMIT) detailCache.delete(detailCache.keys().next().value);
 }
 function graphWeight(from, to, fallback) { return Number(subwayGraph.stationGraph?.[from]?.[to]?.minutes) || fallback; }
 function median(values) {
@@ -262,11 +281,16 @@ async function getCachedTago(key, endpoint, params, ttl, forceRefresh = false) {
   return data;
 }
 async function getStationExtras(station, forceRefresh = false) {
+  const key = station.id;
+  const cached = !forceRefresh && getDetailCache(key);
+  if (cached) return cached;
   const [buses, facilities] = await Promise.all([
-    getCachedTago(`bus:${station.id}`, "GetSubwaySttnExitAcctoBusRouteList", { subwayStationId: station.id, numOfRows: "10000" }, STATIC_CACHE_TTL, forceRefresh),
-    getCachedTago(`facility:${station.id}`, "GetSubwaySttnExitAcctoCfrFcltyList", { subwayStationId: station.id, numOfRows: "10000" }, STATIC_CACHE_TTL, forceRefresh)
+    fetchTago("GetSubwaySttnExitAcctoBusRouteList", { subwayStationId: station.id, numOfRows: String(DETAIL_ROW_LIMIT) }),
+    fetchTago("GetSubwaySttnExitAcctoCfrFcltyList", { subwayStationId: station.id, numOfRows: String(DETAIL_ROW_LIMIT) })
   ]);
-  return { buses, facilities };
+  const details = { buses: normaliseItems(buses).slice(0, DETAIL_ROW_LIMIT), facilities: normaliseItems(facilities).slice(0, DETAIL_ROW_LIMIT) };
+  setDetailCache(key, details);
+  return details;
 }
 
 function orderedLines(region) {
@@ -389,15 +413,15 @@ function updateOriginSchedule(route, schedule) {
 function normaliseItems(items) { return Array.isArray(items) ? items : items ? [items] : []; }
 function renderBuses(container, items) {
   const rows = normaliseItems(items); if (!rows.length) { container.textContent = "API에서 버스 연계 정보를 찾지 못했습니다."; return; }
-  const groups = {}; rows.forEach((item, index) => { const exit = item.exitNo || item.exitNum || item.exit || `${index + 1}번 출구`; const route = item.busRouteNo || item.routeNo || item.busNo || item.routeno || "노선 정보"; (groups[exit] ||= []).push(route); });
-  container.innerHTML = Object.entries(groups).map(([exit, routes]) => `<div class="exit-row"><span class="exit-label">${escapeHTML(exit)}</span><div class="bus-tags">${routes.map(route => `<span class="bus-tag">${escapeHTML(route)}</span>`).join("")}</div></div>`).join("");
+  const groups = {}; rows.forEach((item, index) => { const exit = item.exitNo || item.exitNum || item.exit || `${index + 1}번 출구`; const route = item.busRouteNo || item.routeNo || item.busNo || item.routeno || "노선 정보"; const routes = (groups[exit] ||= []); if (!routes.includes(route) && routes.length < BUS_ROUTES_PER_EXIT_LIMIT) routes.push(route); });
+  container.innerHTML = Object.entries(groups).slice(0, 6).map(([exit, routes]) => `<div class="exit-row"><span class="exit-label">${escapeHTML(exit)}</span><div class="bus-tags">${routes.map(route => `<span class="bus-tag">${escapeHTML(route)}</span>`).join("")}</div></div>`).join("");
 }
 function category(name) { const value = String(name).toLowerCase(); if (value.includes("카페")) return "카페"; if (value.includes("음식") || value.includes("식당")) return "음식점"; if (value.includes("편의")) return "편의점"; if (value.includes("은행")) return "은행"; if (value.includes("병원")) return "병원"; if (value.includes("약국")) return "약국"; if (value.includes("마트")) return "마트"; if (value.includes("버스")) return "버스정류장"; if (value.includes("택시")) return "택시승강장"; if (value.includes("주차")) return "주차장"; if (value.includes("화장")) return "화장실"; return "기타"; }
 function facilityName(item) { return item.dirDesc || item.facilityName || item.fcltyNm || item.name || item.aroundInfo || "주변시설"; }
 function renderFacilities() {
   const data = currentRoute?.extras?.[facilityStation]?.facilities; const enabled = [...document.querySelectorAll(".facility-filter:checked")].map(x => x.value); const items = normaliseItems(data);
   if (!items.length) { els.facilities.textContent = "API에서 주변시설 정보를 찾지 못했습니다."; return; }
-  const filtered = items.filter(item => enabled.includes("전체") || enabled.includes(category(facilityName(item))));
+  const filtered = items.filter(item => enabled.includes("전체") || enabled.includes(category(facilityName(item)))).slice(0, FACILITY_DISPLAY_LIMIT);
   els.facilities.innerHTML = filtered.length ? `<div class="facility-list">${filtered.map(item => `<div class="facility-item"><span>${iconFor(category(facilityName(item)))}</span>${escapeHTML(facilityName(item))}</div>`).join("")}</div>` : "선택한 필터에 해당하는 시설이 없습니다.";
 }
 function iconFor(kind) { return ({"카페":"☕","음식점":"🍔","편의점":"🏪","은행":"🏦","병원":"🏥","약국":"💊","마트":"🛒","버스정류장":"🚏","택시승강장":"🚖","주차장":"🅿","화장실":"🚻"}[kind] || "📍"); }
@@ -414,12 +438,7 @@ async function loadExtras(forceRefresh = false) {
     if (currentRoute !== route) return; route.extras = { origin, destination }; renderBuses(els.originBuses, origin.buses); renderBuses(els.destinationBuses, destination.buses); renderFacilities();
   } finally { extrasRequestInFlight = false; }
 }
-function startExtrasRefresh() {
-  clearInterval(extrasRefreshTimer);
-  loadExtras(true);
-  // The visible route uses fresh TAGO detail data every 30 seconds.
-  extrasRefreshTimer = setInterval(() => loadExtras(true), 30000);
-}
+function startExtrasRefresh() { loadExtras(); }
 async function refreshDetails() {
   if (!currentRoute || extrasRequestInFlight) return;
   els.refresh.disabled = true;
@@ -427,7 +446,12 @@ async function refreshDetails() {
   finally { els.refresh.disabled = false; }
 }
 function updateFavoriteButton() { const key = `${els.origin.value.trim()}|${els.destination.value.trim()}`; const active = favorites.some(item => item.key === key); els.favorite.classList.toggle("active", active); els.favorite.innerHTML = `<i class="fa-${active ? "solid" : "regular"} fa-star"></i><span>${active ? "저장됨" : "즐겨찾기"}</span>`; }
-function saveRecent(origin, destination) { recent = [origin, destination, ...recent.filter(value => value !== origin && value !== destination)].slice(0, 5); localStorage.setItem("metro-recent", JSON.stringify(recent)); renderRecents(); }
+function saveRecent(origin, destination) {
+  recent = [origin, destination, ...recent.filter(value => value !== origin && value !== destination)].slice(0, 5);
+  try { localStorage.setItem("metro-recent", JSON.stringify(recent)); }
+  catch (error) { clearLegacyDetailCache(); try { localStorage.setItem("metro-recent", JSON.stringify(recent)); } catch { console.warn("Recent searches will not be persisted:", error); } }
+  renderRecents();
+}
 function submitRoute(event) {
   event?.preventDefault();
   if (!catalogReady) { setRouteStatus("역 데이터를 아직 준비하고 있습니다. 잠시만 기다려주세요."); return toast("역 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요."); }
@@ -471,7 +495,7 @@ function bindEvents() {
 }
 function init() {
   Object.assign(els, { region:$("#region-select"), originSelector:$("#origin-selector"), destinationSelector:$("#destination-selector"), origin:$("#origin-input"), destination:$("#destination-input"), originSuggestions:$("#origin-suggestions"), destinationSuggestions:$("#destination-suggestions"), form:$("#route-form"), searchButton:$("#search-button"), routeStatus:$("#route-status"), swap:$("#swap-button"), recents:$("#recent-searches"), empty:$("#empty-state"), results:$("#result-section"), title:$("#result-title"), metrics:$("#metric-grid"), timeline:$("#route-timeline"), stationDetails:$("#station-details"), originBuses:$("#origin-buses"), destinationBuses:$("#destination-buses"), facilities:$("#facilities-content"), filters:$("#facility-filters"), favorite:$("#favorite-route"), refresh:$("#refresh-details"), favoritesButton:$("#favorites-button"), theme:$("#theme-toggle"), toast:$("#toast") });
-  renderRecents(); renderFilters(); bindEvents(); loadStationCatalog(); if (localStorage.getItem("metro-dark") === "true") els.theme.click();
+  clearLegacyDetailCache(); renderRecents(); renderFilters(); bindEvents(); loadStationCatalog(); if (localStorage.getItem("metro-dark") === "true") els.theme.click();
   const tick = () => { $("#live-time").textContent = new Date().toLocaleTimeString("ko-KR", { hour12:false }); }; tick(); setInterval(tick, 1000); setTimeout(() => $("#loading-screen").classList.add("done"), 550);
 }
 document.addEventListener("DOMContentLoaded", init);
