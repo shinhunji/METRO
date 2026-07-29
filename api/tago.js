@@ -13,8 +13,8 @@ export default async function handler(request, response) {
     return response.status(405).json({ error: "Only GET requests are supported." });
   }
 
-  if (!process.env.TAGO_SERVICE_KEY) {
-    return response.status(500).json({ error: "TAGO_SERVICE_KEY is not configured." });
+  if (!process.env.Seoul_Express_Train_key) {
+    return response.status(500).json({ error: "Seoul_Express_Train_key is not configured." });
   }
 
   const endpoint = Array.isArray(request.query.endpoint) ? request.query.endpoint[0] : request.query.endpoint;
@@ -26,7 +26,7 @@ export default async function handler(request, response) {
   for (const [key, value] of Object.entries(request.query)) {
     if (key !== "endpoint" && key !== "serviceKey" && typeof value === "string") tagoUrl.searchParams.set(key, value);
   }
-  tagoUrl.searchParams.set("serviceKey", process.env.TAGO_SERVICE_KEY);
+  tagoUrl.searchParams.set("serviceKey", process.env.Seoul_Express_Train_key);
   tagoUrl.searchParams.set("_type", "json");
 
   try {
