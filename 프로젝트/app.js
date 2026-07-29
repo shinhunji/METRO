@@ -165,7 +165,7 @@ function findRoute(start, end, preference = "time") {
 const calculateTransfers = path => path.slice(0, -1).reduce((count, stop) => count + Number(stop.transfer), 0);
 const formatTime = date => date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
 
-async function fetchTago(endpoint, params = {}) {
+async function fetchTago(endpoint, params = {}, withStatus = false) {
   const query = new URLSearchParams({ endpoint, _type: "json", numOfRows: "50", pageNo: "1", ...params });
   try {
     const response = await fetch(`${API_BASE}?${query}`);
@@ -174,8 +174,12 @@ async function fetchTago(endpoint, params = {}) {
     const body = data.response?.body;
     const apiSucceeded = data.response?.header?.resultCode === "00" || Boolean(body);
     if (!apiSucceeded) throw new Error(data.response?.header?.resultMsg || "API 응답 오류");
-    return body?.items?.item || [];
-  } catch (error) { console.warn("TAGO API request failed:", endpoint, error); return null; }
+    const items = body?.items?.item || [];
+    return withStatus ? { items, error: "" } : items;
+  } catch (error) {
+    console.warn("TAGO API request failed:", endpoint, error);
+    return withStatus ? { items: [], error: error.message || "API 요청에 실패했습니다." } : null;
+  }
 }
 
 function currentDayType() { const day = new Date().getDay(); return day === 0 ? "03" : day === 6 ? "02" : "01"; }
@@ -270,10 +274,10 @@ async function getStationExtras(station, forceRefresh = false) {
   const cached = !forceRefresh && getDetailCache(key);
   if (cached) return cached;
   const [buses, facilities] = await Promise.all([
-    fetchTago("GetSubwaySttnExitAcctoBusRouteList", { subwayStationId: station.id, numOfRows: String(DETAIL_ROW_LIMIT) }),
+    fetchTago("GetSubwaySttnExitAcctoBusRouteList", { subwayStationId: station.id, numOfRows: "1000" }, true),
     fetchTago("GetSubwaySttnExitAcctoCfrFcltyList", { subwayStationId: station.id, numOfRows: String(DETAIL_ROW_LIMIT) })
   ]);
-  const details = { buses: normaliseItems(buses).slice(0, DETAIL_ROW_LIMIT), facilities: normaliseItems(facilities).slice(0, DETAIL_ROW_LIMIT) };
+  const details = { buses: normaliseItems(buses.items), busError: buses.error, facilities: normaliseItems(facilities).slice(0, DETAIL_ROW_LIMIT) };
   setDetailCache(key, details);
   return details;
 }
@@ -339,7 +343,7 @@ function routeTimes(path, departureSeconds) {
     return time;
   });
 }
-function renderResult(result) {
+function renderResult(result, forceExtras = false, scroll = true) {
   const { path, totalMinutes, preference } = result;
   const transfers = result.transfers ?? calculateTransfers(path); const stops = path.length;
   const now = new Date(); const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
@@ -353,8 +357,8 @@ function renderResult(result) {
   renderRouteTimeline(path, times, stopRegion, stationName);
   els.stationDetails.innerHTML = [path[0], path.at(-1)].map((stop, i) => `<article class="station-card glass-card"><p class="eyebrow">${i ? "DESTINATION" : "ORIGIN"} STATION</p><h3>${stationNameMarkup(stationName(stop))}</h3><p class="station-line"><span class="line-color" style="background:${lineColor(stopRegion(stop), stop.line)}"></span> ${escapeHTML(stop.line)}</p><div class="station-info"><div>이전역<b>${i ? stationNameMarkup(stationName(path.at(-2))) : "출발역"}</b></div><div>다음역<b>${i ? "도착" : path[1] ? stationNameMarkup(stationName(path[1])) : "-"}</b></div><div>${i ? "도착 예정" : "출발 시간"}<b>${formatScheduleTime(times[i ? times.length - 1 : 0])}</b></div><div>이동시간<b>${totalMinutes}분</b></div></div></article>`).join("");
   document.getElementById("route-badge").textContent = "다음 열차 시간표 확인 중";
-  updateFavoriteButton(); startExtrasRefresh(); els.results.scrollIntoView({ behavior: "smooth", block: "start" });
-  updateRouteSchedule(currentRoute);
+  updateFavoriteButton(); startExtrasRefresh(forceExtras); if (scroll) els.results.scrollIntoView({ behavior: "smooth", block: "start" });
+  return updateRouteSchedule(currentRoute);
 }
 function renderRouteTimeline(path, times, stopRegion, stationName) {
   const items = [];
@@ -453,10 +457,26 @@ async function updateRouteSchedule(route) {
 }
 
 function normaliseItems(items) { return Array.isArray(items) ? items : items ? [items] : []; }
-function renderBuses(container, items) {
-  const rows = normaliseItems(items); if (!rows.length) { container.textContent = "API에서 버스 연계 정보를 찾지 못했습니다."; return; }
-  const groups = {}; rows.forEach((item, index) => { const exit = item.exitNo || item.exitNum || item.exit || `${index + 1}번 출구`; const route = item.busRouteNo || item.routeNo || item.busNo || item.routeno || "노선 정보"; const routes = (groups[exit] ||= []); if (!routes.includes(route) && routes.length < BUS_ROUTES_PER_EXIT_LIMIT) routes.push(route); });
-  container.innerHTML = Object.entries(groups).slice(0, 6).map(([exit, routes]) => `<div class="exit-row"><span class="exit-label">${escapeHTML(exit)}</span><div class="bus-tags">${routes.map(route => `<span class="bus-tag">${escapeHTML(route)}</span>`).join("")}</div></div>`).join("");
+function busField(item, names, matcher) {
+  const direct = names.map(name => item[name]).find(value => value !== undefined && value !== null && String(value).trim());
+  if (direct) return direct;
+  return Object.entries(item).find(([key, value]) => value !== undefined && value !== null && String(value).trim() && matcher(key.toLowerCase()))?.[1] || "";
+}
+function busExitLabel(value, fallback) {
+  const exit = String(value || fallback).trim();
+  return /^\d+$/.test(exit) ? `${exit}번 출구` : exit;
+}
+function renderBuses(container, items, error = "") {
+  const rows = normaliseItems(items);
+  if (!rows.length) { container.textContent = error ? `버스 연계 정보를 불러오지 못했습니다. (${error})` : "이 역의 버스 연계 정보가 제공되지 않습니다."; return; }
+  const groups = {};
+  rows.forEach((item, index) => {
+    const exit = busExitLabel(busField(item, ["exitNo", "exitNum", "exit", "exitNumber"], key => key.includes("exit") && /(no|num|number)/.test(key)), `${index + 1}번 출구`);
+    const route = busField(item, ["busRouteNo", "routeNo", "busNo", "routeno", "busRouteNm", "busRouteName", "routeNumber"], key => (key.includes("route") || key.includes("bus")) && /(no|num|number|name|nm)/.test(key)) || "노선 정보";
+    const routes = (groups[exit] ||= []);
+    if (!routes.includes(route)) routes.push(route);
+  });
+  container.innerHTML = Object.entries(groups).map(([exit, routes]) => `<div class="exit-row"><span class="exit-label">${escapeHTML(exit)}</span><div class="bus-tags">${routes.map(route => `<span class="bus-tag">${escapeHTML(route)}</span>`).join("")}</div></div>`).join("");
 }
 function category(name) { const value = String(name).toLowerCase(); if (value.includes("카페")) return "카페"; if (value.includes("음식") || value.includes("식당")) return "음식점"; if (value.includes("편의")) return "편의점"; if (value.includes("은행")) return "은행"; if (value.includes("병원")) return "병원"; if (value.includes("약국")) return "약국"; if (value.includes("마트")) return "마트"; if (value.includes("버스")) return "버스정류장"; if (value.includes("택시")) return "택시승강장"; if (value.includes("주차")) return "주차장"; if (value.includes("화장")) return "화장실"; return "기타"; }
 function facilityName(item) { return item.dirDesc || item.facilityName || item.fcltyNm || item.name || item.aroundInfo || "주변시설"; }
@@ -477,14 +497,22 @@ async function loadExtras(forceRefresh = false) {
       getStationExtras(selectedStationRecords.origin, forceRefresh),
       getStationExtras(selectedStationRecords.destination, forceRefresh)
     ]);
-    if (currentRoute !== route) return; route.extras = { origin, destination }; renderBuses(els.originBuses, origin.buses); renderBuses(els.destinationBuses, destination.buses); renderFacilities();
+    if (currentRoute !== route) return; route.extras = { origin, destination }; renderBuses(els.originBuses, origin.buses, origin.busError); renderBuses(els.destinationBuses, destination.buses, destination.busError); renderFacilities();
   } finally { extrasRequestInFlight = false; }
 }
-function startExtrasRefresh() { loadExtras(); }
+function startExtrasRefresh(forceRefresh = false) { loadExtras(forceRefresh); }
 async function refreshDetails() {
   if (!currentRoute || extrasRequestInFlight) return;
   els.refresh.disabled = true;
-  try { await loadExtras(true); toast("역 정보를 새로고침했습니다. 시간표 그래프는 정적 JSON 데이터를 사용합니다."); }
+  try {
+    timetableCache.clear();
+    const preference = document.querySelector("input[name='preference']:checked")?.value || "time";
+    const result = findRoute(currentRoute.path[0].id, currentRoute.path.at(-1).id, preference);
+    if (!result) throw new Error("현재 경로를 다시 찾지 못했습니다.");
+    await renderResult(result, true, false);
+    toast("현재 시각 기준으로 다음 열차와 버스 연계 정보를 새로고침했습니다.");
+  }
+  catch (error) { console.warn("Could not refresh route", error); toast("새로고침에 실패했습니다. 잠시 후 다시 시도해주세요."); }
   finally { els.refresh.disabled = false; }
 }
 function updateFavoriteButton() { const key = `${els.origin.value.trim()}|${els.destination.value.trim()}`; const active = favorites.some(item => item.key === key); els.favorite.classList.toggle("active", active); els.favorite.innerHTML = `<i class="fa-${active ? "solid" : "regular"} fa-star"></i><span>${active ? "저장됨" : "즐겨찾기"}</span>`; }
