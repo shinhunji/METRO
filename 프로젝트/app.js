@@ -24,9 +24,9 @@ const selectedStationRecords = { origin: null, destination: null };
 let favorites = JSON.parse(localStorage.getItem("metro-favorites") || "[]");
 let recent = JSON.parse(localStorage.getItem("metro-recent") || "[\"서울역\",\"강남\",\"부산역\"]");
 const detailCache = new Map();
-const DETAIL_CACHE_LIMIT = 8;
-const DETAIL_ROW_LIMIT = 30;
-const FACILITY_DISPLAY_LIMIT = 12;
+const DETAIL_CACHE_LIMIT = 10;
+const DETAIL_ROW_LIMIT = 10;
+const FACILITY_DISPLAY_LIMIT = 10;
 const BUS_ROUTES_PER_EXIT_LIMIT = 6;
 const timetableCache = new Map();
 
@@ -274,10 +274,10 @@ async function getStationExtras(station, forceRefresh = false) {
   const cached = !forceRefresh && getDetailCache(key);
   if (cached) return cached;
   const [buses, facilities] = await Promise.all([
-    fetchTago("GetSubwaySttnExitAcctoBusRouteList", { subwayStationId: station.id, numOfRows: "1000" }, true),
+    fetchTago("GetSubwaySttnExitAcctoBusRouteList", { subwayStationId: station.id, numOfRows: String(DETAIL_ROW_LIMIT) }, true),
     fetchTago("GetSubwaySttnExitAcctoCfrFcltyList", { subwayStationId: station.id, numOfRows: String(DETAIL_ROW_LIMIT) })
   ]);
-  const details = { buses: normaliseItems(buses.items), busError: buses.error, facilities: normaliseItems(facilities).slice(0, DETAIL_ROW_LIMIT) };
+  const details = { buses: normaliseItems(buses.items).slice(0, DETAIL_ROW_LIMIT), busError: buses.error, facilities: normaliseItems(facilities).slice(0, DETAIL_ROW_LIMIT) };
   setDetailCache(key, details);
   return details;
 }

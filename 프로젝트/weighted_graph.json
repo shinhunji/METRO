@@ -8568,6 +8568,10 @@
       }
     },
     "MTRBGB10101": {
+      "MTRBS2227": {
+        "minutes": 5,
+        "source": "transfer"
+      },
       "MTRBGB10102": {
         "minutes": 2,
         "source": "TAGO timetable"
@@ -9450,6 +9454,10 @@
       }
     },
     "MTRBS2227": {
+      "MTRBGB10101": {
+        "minutes": 5,
+        "source": "transfer"
+      },
       "MTRBS2226": {
         "minutes": 5,
         "source": "TAGO timetable"

@@ -16,6 +16,10 @@ const transferStations = {
   "광주": [],
   "대전": []
 };
+// Some TAGO transfer stations use qualified names, so connect these known ID pairs directly.
+const explicitTransferPairs = [
+  ["MTRBGB10101", "MTRBS2227"] // 부산김해경전철 사상 <-> 부산 2호선 사상
+];
 const endpoint = async (name, params) => {
   const url = new URL(`${baseUrl}/${name}`);
   url.search = new URLSearchParams({ serviceKey, _type: "json", numOfRows: "10000", pageNo: "1", ...params });
@@ -70,13 +74,18 @@ for (const [regionName, names] of Object.entries(transferStations)) {
   const allowedNames = new Set(names);
   const grouped = new Map();
   for (const line of Object.values(regions[regionName]?.lines || {})) for (const station of line.stations) {
-    if (!allowedNames.has(station.name)) continue;
-    (grouped.get(station.name) || grouped.set(station.name, []).get(station.name)).push(station);
+    const normalizedName = station.name.replace(/\s*\([^)]*\)\s*$/, "");
+    if (!allowedNames.has(normalizedName)) continue;
+    (grouped.get(normalizedName) || grouped.set(normalizedName, []).get(normalizedName)).push(station);
   }
   for (const stations of grouped.values()) for (let index = 1; index < stations.length; index += 1) {
     addEdge(stations[0].id, stations[index].id, transferMinutes, "transfer");
     addEdge(stations[index].id, stations[0].id, transferMinutes, "transfer");
   }
+}
+for (const [from, to] of explicitTransferPairs) {
+  addEdge(from, to, transferMinutes, "transfer");
+  addEdge(to, from, transferMinutes, "transfer");
 }
 const hasPath = (start, end) => {
   const visited = new Set([start]); const queue = [start];
@@ -91,6 +100,7 @@ const stationId = (region, line, name) => regions[region]?.lines?.[line]?.statio
 const requiredRoutes = [
   [stationId("수도권", "1호선", "서울역"), stationId("수도권", "4호선", "서울역"), "수도권 서울역 환승"],
   [stationId("부산", "1호선", "서면"), stationId("부산", "2호선", "서면"), "부산 서면 환승"],
+  ["MTRBGB10101", "MTRBS2227", "부산김해경전철 사상 환승"],
   [stationId("대구", "1호선", "반월당"), stationId("대구", "2호선", "반월당"), "대구 반월당 환승"]
 ];
 for (const [start, end, label] of requiredRoutes) {
