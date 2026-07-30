@@ -1,8 +1,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
-const serviceKey = process.env.SUBWAY_SERVICE_KEY;
-if (!serviceKey) throw new Error("Set SUBWAY_SERVICE_KEY before generating static subway JSON data.");
+const serviceKey = process.env.Seoul_Express_Train_key;
+if (!serviceKey) throw new Error("Set Seoul_Express_Train_key before generating static subway JSON data.");
 
 const outputDirectory = resolve("프로젝트");
 const baseUrl = "https://apis.data.go.kr/1613000/SubwayInfo";

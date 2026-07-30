@@ -424,16 +424,22 @@ async function updateRouteSchedule(route) {
     if (!firstTrain) throw new Error("출발역 다음 열차 시간표를 찾지 못했습니다.");
     times[0] = firstTrain.time;
     if (times.length > 1) times[1] = firstTrain.nextTime || times[0] + (route.path[0].minutes || DEFAULT_TRAVEL_MINUTES) * 60;
+    // Only query live timetables when boarding a train; graph weights cover in-line stops.
     for (let index = 1; index < route.path.length - 1; index += 1) {
       const edge = route.path[index];
       if (edge.transfer) {
         times[index + 1] = times[index] + (edge.minutes || DEFAULT_TRAVEL_MINUTES) * 60;
+        const nextStop = route.path[index + 2];
+        if (!nextStop) continue;
+        const transferTrain = await getNextTrain(route.path[index + 1].id, times[index + 1], nextStop.id);
+        if (currentRoute !== route) return;
+        if (transferTrain) {
+          const delay = transferTrain.time - times[index + 1];
+          for (let later = index + 1; later < times.length; later += 1) times[later] += delay;
+          times[index + 2] = transferTrain.nextTime || transferTrain.time + (route.path[index + 1].minutes || DEFAULT_TRAVEL_MINUTES) * 60;
+        }
         continue;
       }
-      const train = await getNextTrain(edge.id, times[index], route.path[index + 1]?.id);
-      if (currentRoute !== route) return;
-      const fallback = times[index] + (edge.minutes || DEFAULT_TRAVEL_MINUTES) * 60;
-      times[index + 1] = train?.nextTime || (train ? train.time + (edge.minutes || DEFAULT_TRAVEL_MINUTES) * 60 : fallback);
     }
     const actualMinutes = Math.max(0, Math.round((times.at(-1) - route.departureSeconds) / 60));
     route.departureSeconds = times[0]; route.totalMinutes = actualMinutes; route.times = times;
@@ -505,11 +511,12 @@ async function refreshDetails() {
   if (!currentRoute || extrasRequestInFlight) return;
   els.refresh.disabled = true;
   try {
-    timetableCache.clear();
-    const preference = document.querySelector("input[name='preference']:checked")?.value || "time";
-    const result = findRoute(currentRoute.path[0].id, currentRoute.path.at(-1).id, preference);
-    if (!result) throw new Error("현재 경로를 다시 찾지 못했습니다.");
-    await renderResult(result, true, false);
+    const now = new Date();
+    currentRoute.departureSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    document.getElementById("route-badge").textContent = "현재 시각 기준 시간표 확인 중";
+    const scheduleRefresh = updateRouteSchedule(currentRoute);
+    const extrasRefresh = loadExtras(true);
+    await Promise.all([scheduleRefresh, extrasRefresh]);
     toast("현재 시각 기준으로 다음 열차와 버스 연계 정보를 새로고침했습니다.");
   }
   catch (error) { console.warn("Could not refresh route", error); toast("새로고침에 실패했습니다. 잠시 후 다시 시도해주세요."); }
