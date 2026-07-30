@@ -6,6 +6,9 @@ const ALLOWED_ENDPOINTS = new Set([
   "GetSubwaySttnExitAcctoCfrFcltyList",
   "GetSubwaySttnAcctoSchdulList"
 ]);
+const BUS_ENDPOINTS = new Set([
+  "GetSubwaySttnExitAcctoBusRouteList"
+]);
 
 export default async function handler(request, response) {
   if (request.method !== "GET") {
@@ -17,9 +20,10 @@ export default async function handler(request, response) {
   if (!ALLOWED_ENDPOINTS.has(endpoint)) {
     return response.status(400).json({ error: "Unsupported TAGO endpoint." });
   }
-  const serviceKey = process.env.Seoul_Express_Train_key;
+  const serviceKeyName = BUS_ENDPOINTS.has(endpoint) ? "TAGO_SERVICE_KEY" : "Seoul_Express_Train_key";
+  const serviceKey = process.env[serviceKeyName];
   if (!serviceKey) {
-    return response.status(500).json({ error: "Seoul_Express_Train_key is not configured." });
+    return response.status(500).json({ error: `${serviceKeyName} is not configured.` });
   }
 
   const tagoUrl = new URL(`${TAGO_BASE}/${endpoint}`);

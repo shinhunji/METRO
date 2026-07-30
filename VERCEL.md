@@ -1,7 +1,7 @@
 # Vercel deployment
 
 1. Import `shinhunji/METRO` into Vercel.
-2. In **Project Settings > Environment Variables**, add `Seoul_Express_Train_key` with the TAGO service key. Enable it for Production, Preview, and Development. The same TAGO key is used for subway timetable, station, and bus-route requests.
+2. In **Project Settings > Environment Variables**, add `Seoul_Express_Train_key` for subway timetable and station requests, and `TAGO_SERVICE_KEY` for bus-route requests. Enable both for Production, Preview, and Development.
 3. Deploy the project. Vercel serves the site from `프로젝트/` and exposes the secure proxy at `/api/tago`.
 
 > Important: Disable **Vercel Settings > Deployment Protection** for the production domain, or require visitors to sign in. Protected deployments redirect `station_catalog.json` and `weighted_graph.json` to Vercel's login page, which prevents the route finder from starting.
